@@ -386,8 +386,8 @@ export default function V3() {
                 </g>
               ))}
             </svg>
+            // DEPOIS:
             <div style={{ position: 'relative', zIndex: 2, width: '230px', height: '230px', borderRadius: '50%', padding: '34px', background: t.glass, border: `1px solid ${dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)'}`, boxShadow: dark ? '0 24px 70px rgba(0,0,0,0.65)' : '0 24px 70px rgba(0,0,0,0.13)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.3s' }}>
-              <!-- DEPOIS: Com fallback garantido -->
               <img src={logoImagem360 || '/logo_360.png'} onError={e => { e.currentTarget.src = '/logo_360.png' }} alt="Imagem 360" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: dark ? 'brightness(1.8) contrast(0.9)' : 'none', transition: 'filter 0.3s' }} />
             </div>
             <div style={{ position: 'absolute', top: '3%', left: '50%', transform: 'translateX(-50%)', zIndex: 3, display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 18px', borderRadius: '999px', background: dark ? 'rgba(15,15,15,0.9)' : 'rgba(255,255,255,0.94)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, backdropFilter: 'blur(14px)' }}>
