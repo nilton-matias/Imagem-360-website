@@ -3,7 +3,7 @@
   "stats": [
     {
       "id": "stat-1",
-      "value": 50,
+      "value": 30,
       "suffix": "+",
       "prefix": false,
       "labelPt": "Campanhas",
