@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useSiteContent } from '../context/ContentContext'
-import { commitContentToGitHub, testGitHubConnection } from '../services/githubService'
+import { publishContent } from '../services/githubService'
 import { resolveImageSource } from '../utils/imageMap'
 import { ClientItem, StatItem } from '../types/content'
+import logoImagem360 from '../imports/logo_novo_360.png'
 
 export default function AdminPanel() {
   const {
@@ -12,28 +13,26 @@ export default function AdminPanel() {
     clearDraft,
     hasLocalDraft,
     gitHubConfig,
-    saveGitHubConfig,
     isAdminOpen,
     setIsAdminOpen,
     isAuthenticated,
     login,
     logout,
-    adminPassword,
     setAdminPassword,
   } = useSiteContent()
 
-  const [activeTab, setActiveTab] = useState<'marcas' | 'numeros' | 'produto' | 'textos' | 'github'>('marcas')
+  // Modo claro como padrão para a cliente
+  const [adminDark, setAdminDark] = useState(false)
+  const [activeTab, setActiveTab] = useState<'marcas' | 'numeros' | 'produto' | 'textos' | 'seguranca'>('marcas')
   const [passwordInput, setPasswordInput] = useState('')
   const [loginError, setLoginError] = useState('')
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | 'loading' | null; message: string; url?: string }>({
     type: null,
     message: '',
   })
-  const [testingConnection, setTestingConnection] = useState(false)
   const [newPassword, setNewPassword] = useState('')
-  const [showPasswordChange, setShowPasswordChange] = useState(false)
+  const [passwordSuccess, setPasswordSuccess] = useState('')
 
-  // Estados locais para edição rápida de formulários
   const [newBrand, setNewBrand] = useState({ name: '', img: '' })
   const [newStat, setNewStat] = useState<Omit<StatItem, 'id'>>({
     value: 10,
@@ -45,7 +44,34 @@ export default function AdminPanel() {
 
   if (!isAdminOpen) return null
 
-  // Tela de Login se não estiver autenticado
+  const ui = adminDark
+    ? {
+        bg: '#0d0c13',
+        headerBg: '#13111b',
+        sidebarBg: '#100e17',
+        cardBg: '#181622',
+        inputBg: 'rgba(255,255,255,0.06)',
+        border: 'rgba(255,255,255,0.09)',
+        text: '#f3f2f7',
+        textMuted: '#9a94a8',
+        textDim: '#706b80',
+        activeTabBg: 'rgba(232,56,74,0.16)',
+        logoFilter: 'brightness(2) contrast(1.05)',
+      }
+    : {
+        bg: '#f8fafc',
+        headerBg: '#ffffff',
+        sidebarBg: '#f1f5f9',
+        cardBg: '#ffffff',
+        inputBg: '#ffffff',
+        border: '#e2e8f0',
+        text: '#0f172a',
+        textMuted: '#64748b',
+        textDim: '#94a3b8',
+        activeTabBg: 'rgba(232,56,74,0.10)',
+        logoFilter: 'none',
+      }
+
   if (!isAuthenticated) {
     const handleLogin = (e: React.FormEvent) => {
       e.preventDefault()
@@ -58,69 +84,102 @@ export default function AdminPanel() {
     }
 
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div style={{ background: '#121016', border: '1px solid rgba(232, 56, 74, 0.4)', borderRadius: '24px', maxWidth: '440px', width: '100%', padding: '36px', boxShadow: '0 20px 60px rgba(0,0,0,0.9)', color: '#fff', textAlign: 'center' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(232,56,74,0.15)', border: '1px solid #e8384a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#e8384a', fontSize: '24px' }}>
-            🔐
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 99999,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          fontFamily: 'var(--font-body, system-ui, sans-serif)',
+        }}
+      >
+        <div
+          style={{
+            background: ui.headerBg,
+            border: `1px solid ${ui.border}`,
+            borderRadius: '24px',
+            maxWidth: '420px',
+            width: '100%',
+            padding: '36px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            color: ui.text,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+            <img src={logoImagem360} alt="Imagem 360" style={{ maxHeight: '100%', maxWidth: '160px', objectFit: 'contain', filter: ui.logoFilter }} />
           </div>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.02em' }}>Painel Administrativo</h2>
-          <p style={{ fontSize: '13px', color: '#a09bb0', marginBottom: '24px', lineHeight: 1.5 }}>
-            Acesso para edição de marcas, métricas, textos e integração direta com GitHub & Vercel.
+
+          <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '6px', letterSpacing: '-0.02em', color: ui.text }}>Painel de Gestão</h2>
+          <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '24px', lineHeight: 1.5 }}>
+            Acesso administrativo para edição de marcas parceiras, números e conteúdos do site.
           </p>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <input
               type="password"
-              placeholder="Digite a senha de administrador"
+              placeholder="Digite a senha de acesso"
               value={passwordInput}
               onChange={e => setPasswordInput(e.target.value)}
               autoFocus
-              style={{ padding: '14px 18px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff', fontSize: '14px', outline: 'none' }}
+              style={{
+                padding: '14px 18px',
+                background: ui.inputBg,
+                border: `1px solid ${ui.border}`,
+                borderRadius: '12px',
+                color: ui.text,
+                fontSize: '14px',
+                outline: 'none',
+              }}
             />
-            {loginError && <p style={{ color: '#ff5c5c', fontSize: '12px', margin: 0 }}>{loginError}</p>}
+            {loginError && <p style={{ color: '#ef4444', fontSize: '12px', margin: 0, fontWeight: 600 }}>{loginError}</p>}
             <button
               type="submit"
-              style={{ padding: '14px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', boxShadow: '0 4px 20px rgba(232,56,74,0.4)', transition: 'background 0.2s' }}
+              style={{
+                padding: '14px',
+                background: '#e8384a',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '13px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(232,56,74,0.3)',
+                transition: 'background 0.2s',
+              }}
             >
               Entrar no Painel
             </button>
             <button
               type="button"
               onClick={() => setIsAdminOpen(false)}
-              style={{ background: 'transparent', border: 'none', color: '#888', fontSize: '12px', cursor: 'pointer', padding: '8px' }}
+              style={{ background: 'transparent', border: 'none', color: ui.textMuted, fontSize: '12px', cursor: 'pointer', padding: '8px' }}
             >
               Fechar e voltar ao site
             </button>
           </form>
-          <div style={{ marginTop: '20px', fontSize: '11px', color: '#666', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
-            Dica inicial: A senha padrão de fábrica é <strong style={{ color: '#e8384a' }}>admin360</strong>. Você pode alterá-la na aba de configurações.
-          </div>
         </div>
       </div>
     )
   }
 
-  // Ações do painel
-  const handleSaveToGitHub = async () => {
-    if (!gitHubConfig.token || !gitHubConfig.owner || !gitHubConfig.repo) {
-      setActiveTab('github')
-      setSaveStatus({
-        type: 'error',
-        message: 'Por favor, configure o Token e Repositório do GitHub na aba "GitHub & Vercel" antes de salvar.',
-      })
-      return
-    }
+  const handlePublish = async () => {
+    setSaveStatus({ type: 'loading', message: 'Publicando alterações no site...' })
 
-    setSaveStatus({ type: 'loading', message: 'Fazendo commit no GitHub e acionando o build na Vercel...' })
-
-    const res = await commitContentToGitHub(gitHubConfig, content)
+    const res = await publishContent(content, gitHubConfig)
     if (res.success) {
       setSaveStatus({
         type: 'success',
-        message: res.message,
+        message: 'Alterações publicadas com sucesso! O site foi atualizado.',
         url: res.commitUrl,
       })
-      // Mantém rascunho local limpo pois já foi commitado
       clearDraft()
     } else {
       setSaveStatus({ type: 'error', message: res.message })
@@ -131,44 +190,26 @@ export default function AdminPanel() {
     saveDraftLocally(content)
     setSaveStatus({
       type: 'success',
-      message: 'Prévia salva localmente com sucesso! As alterações já estão visíveis no site para você testar.',
+      message: 'Prévia salva! As alterações já estão visíveis no seu navegador para conferência.',
     })
   }
 
-  const handleDownloadJson = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, 2))
-    const dlAnchor = document.createElement('a')
-    dlAnchor.setAttribute('href', dataStr)
-    dlAnchor.setAttribute('download', 'site-content.json')
-    dlAnchor.click()
-    dlAnchor.remove()
-  }
-
-  // Manipulação de Marcas
   const handleAddBrand = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newBrand.name.trim()) return
 
-    const brandItem: ClientItem = {
-      id: 'brand_' + Date.now(),
-      name: newBrand.name,
-      img: newBrand.img || 'imgLAM',
-    }
-
-    const updated = {
+    updateContent({
       ...content,
-      clients: [...content.clients, brandItem],
-    }
-    updateContent(updated)
+      clients: [...content.clients, { id: 'brand_' + Date.now(), name: newBrand.name, img: newBrand.img || 'imgLAM' }],
+    })
     setNewBrand({ name: '', img: '' })
   }
 
   const handleRemoveBrand = (id: string) => {
-    const updated = {
+    updateContent({
       ...content,
       clients: content.clients.filter(c => c.id !== id),
-    }
-    updateContent(updated)
+    })
   }
 
   const handleBrandImageUpload = (e: React.ChangeEvent<HTMLInputElement>, brandId?: string) => {
@@ -179,52 +220,40 @@ export default function AdminPanel() {
     reader.onload = event => {
       const dataUrl = event.target?.result as string
       if (brandId) {
-        // Atualiza marca existente
-        const updated = {
+        updateContent({
           ...content,
           clients: content.clients.map(c => (c.id === brandId ? { ...c, img: dataUrl } : c)),
-        }
-        updateContent(updated)
+        })
       } else {
-        // Novo logo
         setNewBrand(prev => ({ ...prev, img: dataUrl }))
       }
     }
     reader.readAsDataURL(file)
   }
 
-  // Manipulação de Números / Estatísticas
   const handleAddStat = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newStat.labelPt.trim()) return
 
-    const statItem: StatItem = {
-      id: 'stat_' + Date.now(),
-      ...newStat,
-    }
-
-    const updated = {
+    updateContent({
       ...content,
-      stats: [...content.stats, statItem],
-    }
-    updateContent(updated)
+      stats: [...content.stats, { id: 'stat_' + Date.now(), ...newStat }],
+    })
     setNewStat({ value: 10, suffix: '+', prefix: false, labelPt: '', labelEn: '' })
   }
 
   const handleRemoveStat = (id: string) => {
-    const updated = {
+    updateContent({
       ...content,
       stats: content.stats.filter(s => s.id !== id),
-    }
-    updateContent(updated)
+    })
   }
 
   const handleUpdateStat = (id: string, field: keyof StatItem, val: any) => {
-    const updated = {
+    updateContent({
       ...content,
       stats: content.stats.map(s => (s.id === id ? { ...s, [field]: val } : s)),
-    }
-    updateContent(updated)
+    })
   }
 
   return (
@@ -233,72 +262,123 @@ export default function AdminPanel() {
         position: 'fixed',
         inset: 0,
         zIndex: 99999,
-        background: 'rgba(5, 4, 8, 0.92)',
-        backdropFilter: 'blur(16px)',
+        background: ui.bg,
         display: 'flex',
         flexDirection: 'column',
-        color: '#ede9f0',
+        color: ui.text,
         fontFamily: 'var(--font-body, system-ui, sans-serif)',
       }}
     >
-      {/* Barra Superior */}
       <header
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 28px',
-          background: '#0d0b13',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          padding: '14px 28px',
+          background: ui.headerBg,
+          borderBottom: `1px solid ${ui.border}`,
           flexWrap: 'wrap',
           gap: '14px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e8384a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>
-            360
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ height: '36px', display: 'flex', alignItems: 'center' }}>
+            <img src={logoImagem360} alt="Imagem 360" style={{ maxHeight: '100%', maxWidth: '120px', objectFit: 'contain', filter: ui.logoFilter }} />
           </div>
           <div>
-            <h1 style={{ fontSize: '16px', fontWeight: 700, margin: 0, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              Painel de Gestão de Conteúdo
-              {hasLocalDraft && (
-                <span style={{ fontSize: '10px', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '99px', background: '#f59e0b', color: '#000', fontWeight: 800, letterSpacing: '0.05em' }}>
+            <h1 style={{ fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: '10px', color: ui.text }}>
+              Painel de Gestão
+              {hasLocalDraft ? (
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '99px', background: '#f59e0b', color: '#000', fontWeight: 800 }}>
                   Prévia Ativa
+                </span>
+              ) : (
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '99px', background: '#dcfce7', color: '#15803d', fontWeight: 700 }}>
+                  Sincronizado
                 </span>
               )}
             </h1>
-            <p style={{ fontSize: '11px', color: '#8c859d', margin: 0 }}>Edição de marcas, números e textos do site com deploy via GitHub e Vercel</p>
+            <p style={{ fontSize: '11px', color: ui.textMuted, margin: 0 }}>Altere textos, marcas e métricas com publicação imediata</p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <button
+            onClick={() => setAdminDark(!adminDark)}
+            style={{
+              padding: '8px 14px',
+              background: ui.sidebarBg,
+              color: ui.text,
+              border: `1px solid ${ui.border}`,
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            {adminDark ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+          </button>
+
+          <button
             onClick={handleTestPreview}
-            title="Salva na memória do seu navegador para você visualizar o site agora mesmo"
-            style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Salva na memória do navegador para você conferir as alterações"
+            style={{
+              padding: '8px 16px',
+              background: ui.sidebarBg,
+              color: ui.text,
+              border: `1px solid ${ui.border}`,
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
           >
-            <span>👁️</span> Testar Prévia ao Vivo
+            <span>👁️</span> Testar Prévia
           </button>
 
           <button
-            onClick={handleDownloadJson}
-            title="Baixar arquivo JSON atual para seu computador"
-            style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={handlePublish}
+            title="Publicar alterações diretamente no site oficial"
+            style={{
+              padding: '8px 22px',
+              background: '#e8384a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 16px rgba(232,56,74,0.3)',
+            }}
           >
-            <span>📥</span> Baixar JSON
-          </button>
-
-          <button
-            onClick={handleSaveToGitHub}
-            title="Commitar no repositório GitHub e acionar publicação automática no Vercel"
-            style={{ padding: '8px 20px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 16px rgba(232,56,74,0.4)' }}
-          >
-            <span>🚀</span> Publicar no GitHub / Vercel
+            <span>🚀</span> Publicar Alterações
           </button>
 
           <button
             onClick={() => setIsAdminOpen(false)}
-            style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#fff', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              background: ui.sidebarBg,
+              border: `1px solid ${ui.border}`,
+              color: ui.text,
+              fontSize: '16px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             title="Fechar Painel e Ver Site"
           >
             ✕
@@ -306,28 +386,22 @@ export default function AdminPanel() {
         </div>
       </header>
 
-      {/* Alerta de Status */}
       {saveStatus.type && (
         <div
           style={{
             padding: '12px 28px',
-            background: saveStatus.type === 'success' ? '#064e3b' : saveStatus.type === 'error' ? '#7f1d1d' : '#1e3a8a',
+            background: saveStatus.type === 'success' ? '#10b981' : saveStatus.type === 'error' ? '#ef4444' : '#3b82f6',
             color: '#fff',
             fontSize: '13px',
+            fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
           }}
         >
           <div>
-            <strong>{saveStatus.type === 'success' ? '✓ Sucesso: ' : saveStatus.type === 'error' ? '✕ Atenção: ' : '⏳ Processando: '}</strong>
+            <strong>{saveStatus.type === 'success' ? '✓ ' : saveStatus.type === 'error' ? '✕ ' : '⏳ '}</strong>
             {saveStatus.message}
-            {saveStatus.url && (
-              <a href={saveStatus.url} target="_blank" rel="noopener noreferrer" style={{ color: '#93c5fd', marginLeft: '10px', textDecoration: 'underline' }}>
-                Ver commit no GitHub →
-              </a>
-            )}
           </div>
           <button onClick={() => setSaveStatus({ type: null, message: '' })} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
             ✕
@@ -335,16 +409,24 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Abas e Conteúdo */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Menu Lateral de Abas */}
-        <aside style={{ width: '240px', background: '#09080e', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <aside
+          style={{
+            width: '230px',
+            background: ui.sidebarBg,
+            borderRight: `1px solid ${ui.border}`,
+            padding: '20px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
           {[
             { id: 'marcas', label: 'Marcas Parceiras', icon: '🏢' },
             { id: 'numeros', label: 'Números de Impacto', icon: '📊' },
-            { id: 'produto', label: '360-Message & Links', icon: '🚀' },
+            { id: 'produto', label: '360-Message & Link', icon: '🚀' },
             { id: 'textos', label: 'Textos & Seções', icon: '📝' },
-            { id: 'github', label: 'GitHub & Vercel', icon: '⚙️' },
+            { id: 'seguranca', label: 'Alterar Senha', icon: '🔒' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -356,8 +438,8 @@ export default function AdminPanel() {
                 padding: '12px 16px',
                 borderRadius: '10px',
                 border: 'none',
-                background: activeTab === tab.id ? 'rgba(232,56,74,0.15)' : 'transparent',
-                color: activeTab === tab.id ? '#e8384a' : '#a09bb0',
+                background: activeTab === tab.id ? ui.activeTabBg : 'transparent',
+                color: activeTab === tab.id ? '#e8384a' : ui.textMuted,
                 fontWeight: activeTab === tab.id ? 700 : 500,
                 fontSize: '13px',
                 textAlign: 'left',
@@ -370,57 +452,52 @@ export default function AdminPanel() {
             </button>
           ))}
 
-          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+          <div style={{ marginTop: 'auto', borderTop: `1px solid ${ui.border}`, paddingTop: '16px' }}>
             <button
               onClick={logout}
-              style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.04)', color: '#888', border: 'none', borderRadius: '8px', fontSize: '11px', cursor: 'pointer', textAlign: 'center' }}
+              style={{ width: '100%', padding: '10px', background: 'transparent', color: ui.textDim, border: `1px solid ${ui.border}`, borderRadius: '8px', fontSize: '11px', cursor: 'pointer', textAlign: 'center', fontWeight: 600 }}
             >
               Sair do Modo Admin
             </button>
           </div>
         </aside>
 
-        {/* Área Principal de Configurações */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '32px 40px', background: '#0e0c14' }}>
-          {/* ABA: MARCAS */}
+        <main style={{ flex: 1, overflowY: 'auto', padding: '32px 40px', background: ui.bg }}>
           {activeTab === 'marcas' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <div>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Marcas que Confiam em Nós</h2>
-                  <p style={{ fontSize: '13px', color: '#9a94a8', margin: 0 }}>Gerencie os logotipos e nomes das empresas parceiras exibidas na página inicial.</p>
-                </div>
+              <div style={{ marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em', color: ui.text }}>Marcas que Confiam em Nós</h2>
+                <p style={{ fontSize: '13px', color: ui.textMuted, margin: 0 }}>Gerencie os logotipos e nomes das empresas parceiras exibidas na página inicial.</p>
               </div>
 
-              {/* Formulário para Adicionar Nova Marca */}
-              <div style={{ background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', marginBottom: '32px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#e8384a' }}>
+              <div style={{ background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', padding: '24px', marginBottom: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 800, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#e8384a' }}>
                   + Adicionar Nova Marca
                 </h3>
                 <form onSubmit={handleAddBrand} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr auto', gap: '14px', alignItems: 'end' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Nome da Empresa / Marca</label>
+                    <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Nome da Empresa / Marca</label>
                     <input
                       type="text"
-                      placeholder="Ex: Banco Comercial ou Empresa XYZ"
+                      placeholder="Ex: Banco Comercial ou Empresa Parceira"
                       value={newBrand.name}
                       onChange={e => setNewBrand({ ...newBrand, name: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                      style={{ width: '100%', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       required
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Logotipo (Upload ou Link URL)</label>
+                    <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Logotipo da Marca</label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
                         type="text"
-                        placeholder="Link da imagem ou envie abaixo"
+                        placeholder="Link da imagem ou envie ao lado"
                         value={newBrand.img.startsWith('data:') ? '[Imagem Carregada do Computador]' : newBrand.img}
                         onChange={e => setNewBrand({ ...newBrand, img: e.target.value })}
-                        style={{ flex: 1, padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ flex: 1, padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
-                      <label style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#fff', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                      <label style={{ padding: '12px 16px', background: ui.sidebarBg, border: `1px solid ${ui.border}`, borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: ui.text, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                         📁 Carregar
                         <input type="file" accept="image/*" onChange={e => handleBrandImageUpload(e)} style={{ display: 'none' }} />
                       </label>
@@ -436,26 +513,26 @@ export default function AdminPanel() {
                 </form>
               </div>
 
-              {/* Lista de Marcas Cadastradas */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
                 {content.clients.map((client, idx) => (
                   <div
                     key={client.id || idx}
                     style={{
-                      background: '#14121b',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: ui.cardBg,
+                      border: `1px solid ${ui.border}`,
                       borderRadius: '16px',
                       padding: '18px',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
-                      position: 'relative',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                     }}
                   >
                     <div
                       style={{
                         height: '70px',
                         background: '#ffffff',
+                        border: '1px solid #e2e8f0',
                         borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
@@ -468,10 +545,6 @@ export default function AdminPanel() {
                         src={resolveImageSource(client.img)}
                         alt={client.name}
                         style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-                        onError={e => {
-                          // Fallback se URL falhar
-                          e.currentTarget.style.display = 'none'
-                        }}
                       />
                     </div>
 
@@ -480,19 +553,18 @@ export default function AdminPanel() {
                         type="text"
                         value={client.name}
                         onChange={e => {
-                          const updated = {
+                          updateContent({
                             ...content,
                             clients: content.clients.map(c => (c.id === client.id ? { ...c, name: e.target.value } : c)),
-                          }
-                          updateContent(updated)
+                          })
                         }}
                         style={{
                           width: '100%',
                           padding: '8px 10px',
-                          background: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(255,255,255,0.08)',
+                          background: ui.inputBg,
+                          border: `1px solid ${ui.border}`,
                           borderRadius: '6px',
-                          color: '#fff',
+                          color: ui.text,
                           fontSize: '12px',
                           fontWeight: 600,
                         }}
@@ -500,14 +572,14 @@ export default function AdminPanel() {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label style={{ fontSize: '11px', color: '#93c5fd', cursor: 'pointer', textDecoration: 'underline' }}>
+                      <label style={{ fontSize: '11px', color: '#e8384a', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
                         Trocar logo
                         <input type="file" accept="image/*" onChange={e => handleBrandImageUpload(e, client.id)} style={{ display: 'none' }} />
                       </label>
 
                       <button
                         onClick={() => handleRemoveBrand(client.id)}
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', padding: '4px 8px' }}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', padding: '4px 8px', fontWeight: 600 }}
                       >
                         Excluir 🗑️
                       </button>
@@ -518,75 +590,74 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ABA: NÚMEROS DE IMPACTO */}
           {activeTab === 'numeros' && (
             <div>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Números que Comprovam (Impacto)</h2>
-                <p style={{ fontSize: '13px', color: '#9a94a8', margin: 0 }}>Edite os valores numéricos, sufixos e textos em português e inglês das métricas em destaque.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em', color: ui.text }}>Números que Comprovam (Impacto)</h2>
+                <p style={{ fontSize: '13px', color: ui.textMuted, margin: 0 }}>Edite os valores numéricos, sufixos e textos das métricas em destaque.</p>
               </div>
 
-              {/* Lista de Métricas Existentes */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '36px' }}>
                 {content.stats.map(stat => (
                   <div
                     key={stat.id}
                     style={{
-                      background: '#14121b',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: ui.cardBg,
+                      border: `1px solid ${ui.border}`,
                       borderRadius: '16px',
                       padding: '20px',
                       display: 'grid',
                       gridTemplateColumns: '120px 100px 1fr 1fr auto',
                       gap: '16px',
                       alignItems: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                     }}
                   >
                     <div>
-                      <label style={{ display: 'block', fontSize: '10px', color: '#888', marginBottom: '4px', textTransform: 'uppercase' }}>Valor Numérico</label>
+                      <label style={{ display: 'block', fontSize: '10px', color: ui.textMuted, marginBottom: '4px', textTransform: 'uppercase', fontWeight: 700 }}>Valor Numérico</label>
                       <input
                         type="number"
                         value={stat.value}
                         onChange={e => handleUpdateStat(stat.id, 'value', Number(e.target.value))}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#e8384a', fontSize: '18px', fontWeight: 800 }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: '#e8384a', fontSize: '18px', fontWeight: 800 }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '10px', color: '#888', marginBottom: '4px', textTransform: 'uppercase' }}>Sufixo / Prefixo</label>
+                      <label style={{ display: 'block', fontSize: '10px', color: ui.textMuted, marginBottom: '4px', textTransform: 'uppercase', fontWeight: 700 }}>Sufixo</label>
                       <input
                         type="text"
                         value={stat.suffix}
                         placeholder="Ex: +"
                         onChange={e => handleUpdateStat(stat.id, 'suffix', e.target.value)}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '10px', color: '#888', marginBottom: '4px', textTransform: 'uppercase' }}>Rótulo em Português</label>
+                      <label style={{ display: 'block', fontSize: '10px', color: ui.textMuted, marginBottom: '4px', textTransform: 'uppercase', fontWeight: 700 }}>Texto (Português)</label>
                       <input
                         type="text"
                         value={stat.labelPt}
                         onChange={e => handleUpdateStat(stat.id, 'labelPt', e.target.value)}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '10px', color: '#888', marginBottom: '4px', textTransform: 'uppercase' }}>Rótulo em Inglês</label>
+                      <label style={{ display: 'block', fontSize: '10px', color: ui.textMuted, marginBottom: '4px', textTransform: 'uppercase', fontWeight: 700 }}>Texto (Inglês)</label>
                       <input
                         type="text"
                         value={stat.labelEn}
                         onChange={e => handleUpdateStat(stat.id, 'labelEn', e.target.value)}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
 
                     <div>
                       <button
                         onClick={() => handleRemoveStat(stat.id)}
-                        style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }}
+                        style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
                       >
                         Excluir
                       </button>
@@ -595,51 +666,50 @@ export default function AdminPanel() {
                 ))}
               </div>
 
-              {/* Adicionar Nova Métrica */}
-              <div style={{ background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#e8384a' }}>
+              <div style={{ background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 800, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#e8384a' }}>
                   + Adicionar Nova Métrica
                 </h3>
                 <form onSubmit={handleAddStat} style={{ display: 'grid', gridTemplateColumns: '120px 100px 1fr 1fr auto', gap: '14px', alignItems: 'end' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Valor</label>
+                    <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Valor</label>
                     <input
                       type="number"
                       value={newStat.value}
                       onChange={e => setNewStat({ ...newStat, value: Number(e.target.value) })}
-                      style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                      style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       required
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Sufixo</label>
+                    <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Sufixo</label>
                     <input
                       type="text"
                       placeholder="Ex: +"
                       value={newStat.suffix}
                       onChange={e => setNewStat({ ...newStat, suffix: e.target.value })}
-                      style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                      style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Rótulo PT</label>
+                    <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Texto PT</label>
                     <input
                       type="text"
-                      placeholder="Ex: Clientes Satisfeitos"
+                      placeholder="Ex: Campanhas Realizadas"
                       value={newStat.labelPt}
                       onChange={e => setNewStat({ ...newStat, labelPt: e.target.value })}
-                      style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                      style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       required
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Rótulo EN</label>
+                    <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Texto EN</label>
                     <input
                       type="text"
-                      placeholder="Ex: Satisfied Clients"
+                      placeholder="Ex: Campaigns Delivered"
                       value={newStat.labelEn}
                       onChange={e => setNewStat({ ...newStat, labelEn: e.target.value })}
-                      style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                      style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                     />
                   </div>
                   <button
@@ -653,33 +723,32 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ABA: 360-MESSAGE & LINKS */}
           {activeTab === 'produto' && (
             <div>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>360-Message & Links de Ação</h2>
-                <p style={{ fontSize: '13px', color: '#9a94a8', margin: 0 }}>Configure para onde o botão do 360-Message redireciona e personalize o texto da seção.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em', color: ui.text }}>360-Message & Links</h2>
+                <p style={{ fontSize: '13px', color: ui.textMuted, margin: 0 }}>Configure para onde o botão do 360-Message redireciona e personalize o texto da seção.</p>
               </div>
 
-              <div style={{ background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '28px', maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', padding: '28px', maxWidth: '680px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: '#e8384a', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                    🔗 Link do Botão "Experimentar o 360-Message"
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#e8384a', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                    🔗 Link de Destino do Botão "Experimentar o 360-Message"
                   </label>
                   <input
                     type="url"
                     value={content.productLink}
                     onChange={e => updateContent({ ...content, productLink: e.target.value })}
                     placeholder="https://360-message.com"
-                    style={{ width: '100%', padding: '14px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(232,56,74,0.4)', borderRadius: '10px', color: '#fff', fontSize: '14px', fontWeight: 600 }}
+                    style={{ width: '100%', padding: '14px 16px', background: ui.inputBg, border: '2px solid rgba(232,56,74,0.3)', borderRadius: '10px', color: ui.text, fontSize: '14px', fontWeight: 600 }}
                   />
-                  <p style={{ fontSize: '11px', color: '#9a94a8', marginTop: '6px' }}>
-                    Ao clicar no botão "Experimentar o 360-Message", o visitante será aberto nesta URL em uma nova aba.
+                  <p style={{ fontSize: '12px', color: ui.textMuted, marginTop: '6px' }}>
+                    Ao clicar no botão no site, o visitante é direcionado para esta página em uma nova aba.
                   </p>
                 </div>
 
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>Texto de Destaque (PT)</label>
+                <div style={{ borderTop: `1px solid ${ui.border}`, paddingTop: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Texto de Destaque da Seção</label>
                   <input
                     type="text"
                     value={content.copy.pt.product[4]}
@@ -688,12 +757,12 @@ export default function AdminPanel() {
                       newProd[4] = e.target.value
                       updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, product: newProd } } })
                     }}
-                    style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>Texto do Botão (PT)</label>
+                  <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Texto do Botão de Ação</label>
                   <input
                     type="text"
                     value={content.copy.pt.product[5]}
@@ -702,30 +771,28 @@ export default function AdminPanel() {
                       newProd[5] = e.target.value
                       updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, product: newProd } } })
                     }}
-                    style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* ABA: TEXTOS & SEÇÕES */}
           {activeTab === 'textos' && (
             <div>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Textos do Site (Português & Inglês)</h2>
-                <p style={{ fontSize: '13px', color: '#9a94a8', margin: 0 }}>Edite os textos do Hero, Sobre Nós, Contato e Rodapé.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em', color: ui.text }}>Textos do Site</h2>
+                <p style={{ fontSize: '13px', color: ui.textMuted, margin: 0 }}>Edite os textos do Hero, Sobre Nós e Contatos da agência.</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {/* Hero Section */}
-                <div style={{ background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px', color: '#e8384a', textTransform: 'uppercase' }}>
+                <div style={{ background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: 800, marginBottom: '16px', color: '#e8384a', textTransform: 'uppercase' }}>
                     1. Hero (Topo da Página)
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Título Principal (PT)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Título Principal (PT)</label>
                       <input
                         type="text"
                         value={content.copy.pt.hero[0]}
@@ -734,9 +801,9 @@ export default function AdminPanel() {
                           newHero[0] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, hero: newHero } } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '10px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', marginBottom: '10px' }}
                       />
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Linha Destacada (PT)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Linha Destacada (PT)</label>
                       <input
                         type="text"
                         value={content.copy.pt.hero[1]}
@@ -745,9 +812,9 @@ export default function AdminPanel() {
                           newHero[1] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, hero: newHero } } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '10px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', marginBottom: '10px' }}
                       />
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Descrição (PT)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Descrição (PT)</label>
                       <textarea
                         rows={3}
                         value={content.copy.pt.hero[2]}
@@ -756,12 +823,12 @@ export default function AdminPanel() {
                           newHero[2] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, hero: newHero } } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Título Principal (EN)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Título Principal (EN)</label>
                       <input
                         type="text"
                         value={content.copy.en.hero[0]}
@@ -770,9 +837,9 @@ export default function AdminPanel() {
                           newHero[0] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, en: { ...content.copy.en, hero: newHero } } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '10px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', marginBottom: '10px' }}
                       />
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Linha Destacada (EN)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Linha Destacada (EN)</label>
                       <input
                         type="text"
                         value={content.copy.en.hero[1]}
@@ -781,9 +848,9 @@ export default function AdminPanel() {
                           newHero[1] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, en: { ...content.copy.en, hero: newHero } } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '10px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', marginBottom: '10px' }}
                       />
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Descrição (EN)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Descrição (EN)</label>
                       <textarea
                         rows={3}
                         value={content.copy.en.hero[2]}
@@ -792,29 +859,28 @@ export default function AdminPanel() {
                           newHero[2] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, en: { ...content.copy.en, hero: newHero } } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Contatos */}
-                <div style={{ background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px', color: '#e8384a', textTransform: 'uppercase' }}>
+                <div style={{ background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: 800, marginBottom: '16px', color: '#e8384a', textTransform: 'uppercase' }}>
                     2. Informações de Contato
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Email Principal</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Email Principal</label>
                       <input
                         type="email"
                         value={content.contactInfo.email}
                         onChange={e => updateContent({ ...content, contactInfo: { ...content.contactInfo, email: e.target.value } })}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Telefone 1</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Telefone Principal</label>
                       <input
                         type="text"
                         value={content.contactInfo.phones[0] || ''}
@@ -823,25 +889,25 @@ export default function AdminPanel() {
                           newPhones[0] = e.target.value
                           updateContent({ ...content, contactInfo: { ...content.contactInfo, phones: newPhones } })
                         }}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Endereço (PT)</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Endereço (PT)</label>
                       <input
                         type="text"
                         value={content.contactInfo.addressPt}
                         onChange={e => updateContent({ ...content, contactInfo: { ...content.contactInfo, addressPt: e.target.value } })}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '6px' }}>Link Google Maps</label>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '6px', fontWeight: 600 }}>Link do Google Maps</label>
                       <input
                         type="text"
                         value={content.contactInfo.mapsUrl}
                         onChange={e => updateContent({ ...content, contactInfo: { ...content.contactInfo, mapsUrl: e.target.value } })}
-                        style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                        style={{ width: '100%', padding: '10px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                   </div>
@@ -850,135 +916,44 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ABA: CONFIGURAÇÃO GITHUB & VERCEL */}
-          {activeTab === 'github' && (
-            <div style={{ maxWidth: '780px' }}>
+          {activeTab === 'seguranca' && (
+            <div style={{ maxWidth: '560px' }}>
               <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Configuração do GitHub & Vercel</h2>
-                <p style={{ fontSize: '13px', color: '#9a94a8', margin: 0 }}>
-                  Conecte o painel ao repositório GitHub do seu projeto. Ao clicar em "Publicar", o painel atualiza o arquivo <code style={{ color: '#e8384a' }}>src/data/site-content.json</code> diretamente no GitHub, fazendo a Vercel republicar o site em segundos.
-                </p>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em', color: ui.text }}>Segurança do Painel</h2>
+                <p style={{ fontSize: '13px', color: ui.textMuted, margin: 0 }}>Altere a senha de acesso a este painel administrativo.</p>
               </div>
 
-              <div style={{ background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#e8384a', marginBottom: '6px' }}>
-                    Personal Access Token (GitHub Token)
-                  </label>
+              <div style={{ background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', padding: '28px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: ui.text, marginBottom: '8px' }}>
+                  Nova Senha de Administrador
+                </label>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <input
                     type="password"
-                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    value={gitHubConfig.token}
-                    onChange={e => saveGitHubConfig({ ...gitHubConfig, token: e.target.value })}
-                    style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
-                  />
-                  <span style={{ fontSize: '11px', color: '#888', marginTop: '4px', display: 'block' }}>
-                    Fica salvo com segurança no seu navegador via LocalStorage. Nunca é compartilhado publicamente.
-                  </span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>Dono / Usuário do GitHub (Owner)</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: nilton ou sua-organizacao"
-                      value={gitHubConfig.owner}
-                      onChange={e => saveGitHubConfig({ ...gitHubConfig, owner: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>Nome do Repositório (Repo)</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: redesign-agency-website"
-                      value={gitHubConfig.repo}
-                      onChange={e => saveGitHubConfig({ ...gitHubConfig, repo: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>Branch</label>
-                    <input
-                      type="text"
-                      placeholder="main"
-                      value={gitHubConfig.branch}
-                      onChange={e => saveGitHubConfig({ ...gitHubConfig, branch: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>Caminho do Arquivo JSON</label>
-                    <input
-                      type="text"
-                      value={gitHubConfig.filePath}
-                      disabled
-                      style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#888', fontSize: '13px' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                  <button
-                    type="button"
-                    disabled={testingConnection}
-                    onClick={async () => {
-                      setTestingConnection(true)
-                      const res = await testGitHubConnection(gitHubConfig)
-                      setTestingConnection(false)
-                      setSaveStatus({
-                        type: res.success ? 'success' : 'error',
-                        message: res.message,
-                      })
-                    }}
-                    style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
-                  >
-                    {testingConnection ? 'Testando conexão...' : '⚡ Testar Conexão com Repositório'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Guia Rápido de como criar Token */}
-              <div style={{ background: '#121019', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '24px', fontSize: '13px', lineHeight: 1.6, color: '#aaa' }}>
-                <h4 style={{ color: '#fff', margin: '0 0 10px 0', fontSize: '14px', fontWeight: 700 }}>Como gerar o Token do GitHub em 1 minuto:</h4>
-                <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <li>Acesse <strong>github.com &gt; Settings &gt; Developer Settings &gt; Personal access tokens &gt; Tokens (classic)</strong>.</li>
-                  <li>Clique em <strong>Generate new token (classic)</strong>.</li>
-                  <li>Dê um nome (ex: <code>admin-site</code>) e marque a caixinha <strong>repo</strong> (acesso completo a repositórios).</li>
-                  <li>Clique em <strong>Generate token</strong> no fim da página e cole o código acima.</li>
-                </ol>
-              </div>
-
-              {/* Alterar Senha de Admin */}
-              <div style={{ marginTop: '24px', background: '#14121b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
-                <h4 style={{ color: '#fff', margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700 }}>Segurança do Painel</h4>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input
-                    type="password"
-                    placeholder="Nova senha do admin"
+                    placeholder="Digite a nova senha"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
-                    style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', maxWidth: '260px' }}
+                    style={{ flex: 1, padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                   />
                   <button
                     onClick={() => {
                       if (newPassword.trim()) {
                         setAdminPassword(newPassword.trim())
                         setNewPassword('')
-                        alert('Senha de administrador alterada com sucesso!')
+                        setPasswordSuccess('Senha alterada com sucesso!')
+                        setTimeout(() => setPasswordSuccess(''), 4000)
                       }
                     }}
-                    style={{ padding: '10px 16px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ padding: '12px 20px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
                   >
-                    Salvar Nova Senha
+                    Salvar
                   </button>
                 </div>
+                {passwordSuccess && (
+                  <p style={{ color: '#10b981', fontSize: '13px', fontWeight: 600, marginTop: '10px', margin: '10px 0 0' }}>
+                    ✓ {passwordSuccess}
+                  </p>
+                )}
               </div>
             </div>
           )}

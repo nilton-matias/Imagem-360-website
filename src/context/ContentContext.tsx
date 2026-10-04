@@ -94,7 +94,14 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateContent = (newContent: SiteContent) => {
     setContent(newContent)
+    try {
+      localStorage.setItem(STORAGE_KEY_CONTENT, JSON.stringify(newContent))
+      setHasLocalDraft(true)
+    } catch (e) {
+      console.error('Erro ao salvar no localStorage:', e)
+    }
   }
+
 
   const saveDraftLocally = (draft: SiteContent) => {
     setContent(draft)

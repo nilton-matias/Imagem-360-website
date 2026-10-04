@@ -119,3 +119,52 @@ export async function commitContentToGitHub(
     return { success: false, message: `Erro inesperado ao salvar no GitHub: ${msg}` }
   }
 }
+
+/**
+ * Publica o conteúdo de forma transparente:
+ * 1. Tenta a Serverless API (/api/publish) onde as variáveis de ambiente do GitHub estão protegidas na Vercel.
+ * 2. Se a API falhar ou não estiver configurada, tenta o fallback com as credenciais salvas (se existirem).
+ */
+export async function publishContent(
+  content: SiteContent,
+  config?: GitHubConfig,
+  commitMessage = 'Atualização de conteúdos do site via Painel Admin'
+): Promise<{ success: boolean; message: string; commitUrl?: string }> {
+  try {
+    const apiRes = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, message: commitMessage }),
+    })
+
+    const data = await apiRes.json().catch(() => ({}))
+
+    if (apiRes.ok && data.success) {
+      return {
+        success: true,
+        message: data.message || 'Alterações salvas com sucesso! O deploy da Vercel foi iniciado automaticamente.',
+        commitUrl: data.commitUrl,
+      }
+    }
+
+    // Se a API não estiver configurada e houver config local configurada
+    if (config?.token && config?.owner && config?.repo) {
+      return await commitContentToGitHub(config, content, commitMessage)
+    }
+
+    return {
+      success: false,
+      message: data.message || 'Não foi possível publicar. Verifique as variáveis de ambiente GITHUB_TOKEN, GITHUB_OWNER e GITHUB_REPO no painel da Vercel.',
+    }
+  } catch (err: unknown) {
+    if (config?.token && config?.owner && config?.repo) {
+      return await commitContentToGitHub(config, content, commitMessage)
+    }
+    const msg = err instanceof Error ? err.message : String(err)
+    return {
+      success: false,
+      message: `Erro na comunicação com a API de publicação: ${msg}`,
+    }
+  }
+}
+
