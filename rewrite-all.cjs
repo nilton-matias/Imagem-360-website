@@ -1,4 +1,151 @@
-import React, { useState } from 'react'
+const fs = require('fs')
+const path = require('path')
+
+function write(relPath, content) {
+  const full = path.resolve(__dirname, relPath)
+  const dir = path.dirname(full)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(full, content, 'utf8')
+  console.log('✓ ' + relPath)
+}
+
+// 1. Copiar Logo Novo
+const logoSrc = 'C:/Users/nilto/.gemini/antigravity/brain/80ea2d7b-a5bb-47ce-ae16-60917f17f75c/.user_uploaded/media_1791107571690.png'
+const logoDst = path.resolve(__dirname, 'src/imports/logo_novo_360.png')
+if (fs.existsSync(logoSrc)) {
+  fs.copyFileSync(logoSrc, logoDst)
+  console.log('✓ src/imports/logo_novo_360.png')
+}
+
+// 2. V3.tsx - Garantir logo novo importado
+const v3Path = path.resolve(__dirname, 'src/versions/V3.tsx')
+if (fs.existsSync(v3Path)) {
+  let v3 = fs.readFileSync(v3Path, 'utf8')
+  v3 = v3.replace(
+    "import logoImagem360 from '../imports/Logo_Imagem_360-1.png'",
+    "import logoImagem360 from '../imports/logo_novo_360.png'"
+  )
+  fs.writeFileSync(v3Path, v3, 'utf8')
+  console.log('✓ src/versions/V3.tsx (logo atualizado)')
+}
+
+// 3. ContentContext.tsx - Auto-save no localStorage
+const ctxPath = path.resolve(__dirname, 'src/context/ContentContext.tsx')
+if (fs.existsSync(ctxPath)) {
+  let ctx = fs.readFileSync(ctxPath, 'utf8')
+  if (!ctx.includes('localStorage.setItem(STORAGE_KEY_CONTENT, JSON.stringify(newContent))')) {
+    ctx = ctx.replace(
+      /const updateContent = \(newContent: SiteContent\) => \{[\s\S]*?setContent\(newContent\)[\s\S]*?\}/,
+      `const updateContent = (newContent: SiteContent) => {
+    setContent(newContent)
+    try {
+      localStorage.setItem(STORAGE_KEY_CONTENT, JSON.stringify(newContent))
+      setHasLocalDraft(true)
+    } catch (e) {
+      console.error('Erro ao salvar no localStorage:', e)
+    }
+  }`
+    )
+    fs.writeFileSync(ctxPath, ctx, 'utf8')
+  }
+  console.log('✓ src/context/ContentContext.tsx (auto-save ativo)')
+}
+
+// 4. githubService.ts - Exportar publishContent
+const ghPath = path.resolve(__dirname, 'src/services/githubService.ts')
+if (fs.existsSync(ghPath)) {
+  let gh = fs.readFileSync(ghPath, 'utf8')
+  if (!gh.includes('export async function publishContent')) {
+    gh += `\n
+export async function publishContent(
+  content: SiteContent,
+  config?: GitHubConfig,
+  commitMessage = 'Atualização de conteúdos do site via Painel Admin'
+): Promise<{ success: boolean; message: string; commitUrl?: string }> {
+  try {
+    const apiRes = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, message: commitMessage }),
+    })
+    const data = await apiRes.json().catch(() => ({}))
+    if (apiRes.ok && data.success) {
+      return {
+        success: true,
+        message: data.message || 'Alterações salvas com sucesso! O deploy da Vercel foi iniciado.',
+        commitUrl: data.commitUrl,
+      }
+    }
+    if (config?.token && config?.owner && config?.repo) {
+      return await commitContentToGitHub(config, content, commitMessage)
+    }
+    return {
+      success: false,
+      message: data.message || 'Configure as variáveis GITHUB_TOKEN, GITHUB_OWNER e GITHUB_REPO na Vercel.',
+    }
+  } catch (err: unknown) {
+    if (config?.token && config?.owner && config?.repo) {
+      return await commitContentToGitHub(config, content, commitMessage)
+    }
+    const msg = err instanceof Error ? err.message : String(err)
+    return {
+      success: false,
+      message: 'Erro ao conectar à API de publicação: ' + msg,
+    }
+  }
+}
+`
+    fs.writeFileSync(ghPath, gh, 'utf8')
+  }
+  console.log('✓ src/services/githubService.ts (publishContent pronto)')
+}
+
+// 4.1. imageMap.ts - Garantir BRAND_IMAGE_OPTIONS
+write('src/utils/imageMap.ts', `import imgLAM from '../assets/71b4ddcb-f27b-4cf2-a9cb-03a003079d28.png'
+import imgMAHS from '../assets/43125cf7-99ea-49eb-9d83-2778192b4e55.png'
+import imgPetro from '../assets/550ee893-25d8-42d1-a998-66ea9bbe171f.png'
+import imgAmopao from '../assets/6f2cf065-bac9-4c65-8fa2-601d5c71e34e.png'
+import imgBread from '../assets/8b484c38-6242-46ac-9cf1-e3e09bcce684.png'
+import imgPBF from '../assets/7975e11e-f074-453f-9042-417445fbfce3.png'
+import imgSolido from '../imports/Microbanco_Solido_-_Fundo_Branco-01.png'
+import imgJogaBets from '../imports/JOGA_BETS_LOGO_-_FINAL.jpg'
+import imgMJD from '../imports/MINISTERIO.jpg'
+
+export const DEFAULT_BRAND_LOGOS: Record<string, string> = {
+  imgLAM,
+  imgMAHS,
+  imgPetro,
+  imgAmopao,
+  imgBread,
+  imgPBF,
+  imgSolido,
+  imgJogaBets,
+  imgMJD,
+}
+
+export const BRAND_IMAGE_OPTIONS = [
+  { key: 'imgLAM', label: 'LAM' },
+  { key: 'imgMAHS', label: 'MAHS' },
+  { key: 'imgPetro', label: 'Petromoc' },
+  { key: 'imgAmopao', label: 'Amo Pão' },
+  { key: 'imgBread', label: 'Saco de Pão Ecológico' },
+  { key: 'imgPBF', label: 'PBF' },
+  { key: 'imgSolido', label: 'Microbanco Sólido' },
+  { key: 'imgJogaBets', label: 'Joga Bets' },
+  { key: 'imgMJD', label: 'Ministério da Justiça' },
+]
+
+export function resolveImageSource(img: string): string {
+  if (!img) return ''
+  if (DEFAULT_BRAND_LOGOS[img]) {
+    return DEFAULT_BRAND_LOGOS[img]
+  }
+  return img
+}
+`)
+
+// 5. AdminPanel.tsx - Modo claro padrão, sem abas técnicas, sem baixar JSON
+const adminPanelCode = `import React, { useState } from 'react'
 import { useSiteContent } from '../context/ContentContext'
 import { publishContent } from '../services/githubService'
 import { StatItem } from '../types/content'
@@ -82,7 +229,7 @@ export default function AdminPanel() {
 
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div style={{ width: '100%', maxWidth: '380px', background: ui.headerBg, border: `1px solid ${ui.border}`, borderRadius: '20px', padding: '36px 30px', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', color: ui.text }}>
+        <div style={{ width: '100%', maxWidth: '380px', background: ui.headerBg, border: \`1px solid \${ui.border}\`, borderRadius: '20px', padding: '36px 30px', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', color: ui.text }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
             <img src={logoImg} alt="Logo" style={{ height: '42px', objectFit: 'contain', filter: ui.logoFilter }} />
           </div>
@@ -95,7 +242,7 @@ export default function AdminPanel() {
               value={passwordInput}
               onChange={e => setPasswordInput(e.target.value)}
               autoFocus
-              style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', background: ui.inputBg, border: `1.5px solid ${ui.border}`, borderRadius: '12px', color: ui.text, fontSize: '14px', marginBottom: '14px', outline: 'none' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', background: ui.inputBg, border: \`1.5px solid \${ui.border}\`, borderRadius: '12px', color: ui.text, fontSize: '14px', marginBottom: '14px', outline: 'none' }}
             />
             {loginError && <p style={{ color: '#ef4444', fontSize: '12px', marginBottom: '14px', textAlign: 'center', fontWeight: 600 }}>{loginError}</p>}
             <button type="submit" style={{ width: '100%', padding: '14px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
@@ -130,10 +277,10 @@ export default function AdminPanel() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ width: '100%', maxWidth: '1080px', height: '90vh', background: ui.bg, border: `1px solid ${ui.border}`, borderRadius: '24px', boxShadow: '0 30px 80px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', overflow: 'hidden', color: ui.text }}>
+      <div style={{ width: '100%', maxWidth: '1080px', height: '90vh', background: ui.bg, border: \`1px solid \${ui.border}\`, borderRadius: '24px', boxShadow: '0 30px 80px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', overflow: 'hidden', color: ui.text }}>
         
         {/* Header */}
-        <div style={{ padding: '16px 24px', background: ui.headerBg, borderBottom: `1px solid ${ui.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '16px 24px', background: ui.headerBg, borderBottom: \`1px solid \${ui.border}\`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <img src={logoImg} alt="Logo" style={{ height: '32px', objectFit: 'contain', filter: ui.logoFilter }} />
             <div>
@@ -149,7 +296,7 @@ export default function AdminPanel() {
             <button
               onClick={() => setAdminDark(d => !d)}
               title={adminDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-              style={{ padding: '8px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ padding: '8px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               {adminDark ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
             </button>
@@ -160,10 +307,10 @@ export default function AdminPanel() {
             >
               {saveStatus.type === 'loading' ? '⏳ Publicando...' : '🚀 Publicar Alterações'}
             </button>
-            <button onClick={logout} style={{ padding: '8px 14px', background: 'transparent', border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.textMuted, fontSize: '12px', cursor: 'pointer' }}>
+            <button onClick={logout} style={{ padding: '8px 14px', background: 'transparent', border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.textMuted, fontSize: '12px', cursor: 'pointer' }}>
               Sair
             </button>
-            <button onClick={() => setIsAdminOpen(false)} style={{ width: '34px', height: '34px', borderRadius: '50%', background: ui.inputBg, border: `1px solid ${ui.border}`, color: ui.text, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <button onClick={() => setIsAdminOpen(false)} style={{ width: '34px', height: '34px', borderRadius: '50%', background: ui.inputBg, border: \`1px solid \${ui.border}\`, color: ui.text, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
               ✕
             </button>
           </div>
@@ -182,7 +329,7 @@ export default function AdminPanel() {
 
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Sidebar */}
-          <div style={{ width: '220px', background: ui.sidebarBg, borderRight: `1px solid ${ui.border}`, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ width: '220px', background: ui.sidebarBg, borderRight: \`1px solid \${ui.border}\`, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {[
               { id: 'marcas', label: 'Marcas Parceiras', icon: '🏢' },
               { id: 'numeros', label: 'Números de Impacto', icon: '📊' },
@@ -213,14 +360,14 @@ export default function AdminPanel() {
               </button>
             ))}
 
-            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: `1px solid ${ui.border}` }}>
+            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: \`1px solid \${ui.border}\` }}>
               <button
                 onClick={() => {
                   if (confirm('Deseja realmente restaurar todos os textos e marcas originais?')) {
                     resetToOriginal()
                   }
                 }}
-                style={{ width: '100%', padding: '10px', background: 'transparent', border: `1px solid ${ui.border}`, borderRadius: '8px', color: '#ef4444', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                style={{ width: '100%', padding: '10px', background: 'transparent', border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: '#ef4444', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
               >
                 Restaurar Original
               </button>
@@ -236,7 +383,7 @@ export default function AdminPanel() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px', marginBottom: '28px' }}>
                   {content.clients.map((c, i) => (
-                    <div key={i} style={{ padding: '14px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div key={i} style={{ padding: '14px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '60px', height: '40px', background: '#fff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
                         <img src={resolveImageSource(c.img)} alt={c.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                       </div>
@@ -257,7 +404,7 @@ export default function AdminPanel() {
                   ))}
                 </div>
 
-                <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
+                <div style={{ padding: '18px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '14px' }}>
                   <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Adicionar Nova Marca</h4>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <input
@@ -265,12 +412,12 @@ export default function AdminPanel() {
                       placeholder="Nome da Marca"
                       value={newBrand.name}
                       onChange={e => setNewBrand({ ...newBrand, name: e.target.value })}
-                      style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                     />
                     <select
                       value={newBrand.img}
                       onChange={e => setNewBrand({ ...newBrand, img: e.target.value })}
-                      style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                     >
                       <option value="">Selecione uma imagem...</option>
                       {BRAND_IMAGE_OPTIONS.map(opt => (
@@ -299,7 +446,7 @@ export default function AdminPanel() {
                 <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Altere os dados de estatística de impacto exibidos no site.</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
                   {content.stats.map((s, i) => (
-                    <div key={i} style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
+                    <div key={i} style={{ padding: '18px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '14px' }}>
                       <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                         <div style={{ flex: 1 }}>
                           <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Valor</label>
@@ -311,7 +458,7 @@ export default function AdminPanel() {
                               updated[i] = { ...updated[i], value: Number(e.target.value) }
                               updateContent({ ...content, stats: updated })
                             }}
-                            style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '6px', color: ui.text, fontSize: '14px', fontWeight: 700 }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '6px', color: ui.text, fontSize: '14px', fontWeight: 700 }}
                           />
                         </div>
                         <div style={{ width: '70px' }}>
@@ -324,7 +471,7 @@ export default function AdminPanel() {
                               updated[i] = { ...updated[i], suffix: e.target.value }
                               updateContent({ ...content, stats: updated })
                             }}
-                            style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '6px', color: ui.text, fontSize: '14px', fontWeight: 700 }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '6px', color: ui.text, fontSize: '14px', fontWeight: 700 }}
                           />
                         </div>
                       </div>
@@ -338,7 +485,7 @@ export default function AdminPanel() {
                             updated[i] = { ...updated[i], labelPt: e.target.value }
                             updateContent({ ...content, stats: updated })
                           }}
-                          style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '6px', color: ui.text, fontSize: '13px' }}
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '6px', color: ui.text, fontSize: '13px' }}
                         />
                       </div>
                       <div>
@@ -351,7 +498,7 @@ export default function AdminPanel() {
                             updated[i] = { ...updated[i], labelEn: e.target.value }
                             updateContent({ ...content, stats: updated })
                           }}
-                          style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '6px', color: ui.text, fontSize: '13px' }}
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '6px', color: ui.text, fontSize: '13px' }}
                         />
                       </div>
                     </div>
@@ -364,14 +511,14 @@ export default function AdminPanel() {
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Configurações do 360-Message</h3>
                 <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Link de redirecionamento e textos do produto.</p>
-                <div style={{ padding: '20px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ padding: '20px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>Link do Botão "Experimentar o 360-Message"</label>
                     <input
                       type="url"
                       value={content.productLink || 'https://360-message.com'}
                       onChange={e => updateContent({ ...content, productLink: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                     />
                   </div>
                   <div>
@@ -384,7 +531,7 @@ export default function AdminPanel() {
                         newProd[4] = e.target.value
                         updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, product: newProd } } })
                       }}
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', resize: 'vertical' }}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px', resize: 'vertical' }}
                     />
                   </div>
                 </div>
@@ -396,7 +543,7 @@ export default function AdminPanel() {
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Textos & Seções do Site</h3>
                 <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Edição de títulos e informações principais.</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
+                  <div style={{ padding: '18px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '14px' }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Título Principal (Hero)</h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <input
@@ -407,7 +554,7 @@ export default function AdminPanel() {
                           newHero[1] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, hero: newHero } } })
                         }}
-                        style={{ padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                        style={{ padding: '10px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                       <input
                         type="text"
@@ -417,12 +564,12 @@ export default function AdminPanel() {
                           newHero[2] = e.target.value
                           updateContent({ ...content, copy: { ...content.copy, pt: { ...content.copy.pt, hero: newHero } } })
                         }}
-                        style={{ padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                        style={{ padding: '10px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                   </div>
 
-                  <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
+                  <div style={{ padding: '18px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '14px' }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Informações de Contacto</h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
                       <input
@@ -430,14 +577,14 @@ export default function AdminPanel() {
                         placeholder="Email"
                         value={content.contactInfo.email}
                         onChange={e => updateContent({ ...content, contactInfo: { ...content.contactInfo, email: e.target.value } })}
-                        style={{ padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                        style={{ padding: '10px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                       <input
                         type="text"
                         placeholder="Morada"
                         value={content.contactInfo.addressPt}
                         onChange={e => updateContent({ ...content, contactInfo: { ...content.contactInfo, addressPt: e.target.value } })}
-                        style={{ padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                        style={{ padding: '10px 12px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                       />
                     </div>
                   </div>
@@ -449,14 +596,14 @@ export default function AdminPanel() {
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Segurança do Painel</h3>
                 <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Altere a senha de acesso da área de administração.</p>
-                <div style={{ padding: '20px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px', maxWidth: '400px' }}>
+                <div style={{ padding: '20px', background: ui.cardBg, border: \`1px solid \${ui.border}\`, borderRadius: '14px', maxWidth: '400px' }}>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <input
                       type="password"
                       placeholder="Nova senha"
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      style={{ flex: 1, padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      style={{ flex: 1, padding: '12px 14px', background: ui.inputBg, border: \`1px solid \${ui.border}\`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                     />
                     <button
                       onClick={() => {
@@ -486,3 +633,8 @@ export default function AdminPanel() {
     </div>
   )
 }
+`
+
+write('src/components/AdminPanel.tsx', adminPanelCode)
+
+console.log('\\n✅ Todas as alterações foram reescritas com sucesso!')

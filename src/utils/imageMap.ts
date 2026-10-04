@@ -20,6 +20,18 @@ export const DEFAULT_BRAND_LOGOS: Record<string, string> = {
   imgMJD,
 }
 
+export const BRAND_IMAGE_OPTIONS = [
+  { key: 'imgLAM', label: 'LAM' },
+  { key: 'imgMAHS', label: 'MAHS' },
+  { key: 'imgPetro', label: 'Petromoc' },
+  { key: 'imgAmopao', label: 'Amo Pão' },
+  { key: 'imgBread', label: 'Saco de Pão Ecológico' },
+  { key: 'imgPBF', label: 'PBF' },
+  { key: 'imgSolido', label: 'Microbanco Sólido' },
+  { key: 'imgJogaBets', label: 'Joga Bets' },
+  { key: 'imgMJD', label: 'Ministério da Justiça' },
+]
+
 export function resolveImageSource(img: string): string {
   if (!img) return ''
   if (DEFAULT_BRAND_LOGOS[img]) {
