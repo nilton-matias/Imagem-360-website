@@ -1,4 +1,4 @@
-import { handleContactApi } from '../server/contactEmail'
+import { handleContactApi } from '../server/contactEmail.ts'
 
 export default async function handler(req: any, res: any) {
   // CORS Headers
