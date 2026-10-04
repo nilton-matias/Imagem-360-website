@@ -1,8 +1,7 @@
-import { LOGO_BASE64 } from './logoBase64'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
-const LOGO_PUBLIC_URL =
-  'https://raw.githubusercontent.com/nilton-matias/Imagem-360-website/main/public/logo_360.png'
 
 export interface ContactData {
   name?: string
@@ -14,6 +13,17 @@ export interface ContactData {
   mensagem?: string
   phone?: string
   telefone?: string
+}
+
+// Carrega o logotipo oficial da Imagem 360 em base64 para inclusão inline (CID)
+let LOGO_BASE64 = ''
+try {
+  const logoPath = path.resolve(process.cwd(), 'src/imports/logo_novo_360.png')
+  if (fs.existsSync(logoPath)) {
+    LOGO_BASE64 = fs.readFileSync(logoPath).toString('base64')
+  }
+} catch (e) {
+  console.warn('[email] Aviso ao ler logotipo do disco:', e)
 }
 
 function required(value: unknown): boolean {
@@ -32,7 +42,7 @@ function escapeHtml(value: string | number | undefined | null = ''): string {
 function row(label: string, value: string | undefined): string {
   return `
     <tr>
-      <td style="padding:10px 14px;border-bottom:1px solid #edf2f7;color:#64748b;font-size:13px;width:150px;font-weight:600;">${escapeHtml(label)}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #edf2f7;color:#64748b;font-size:13px;width:150px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${escapeHtml(label)}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #edf2f7;color:#0f172a;font-size:14px;line-height:1.5;">${escapeHtml(value || '-')}</td>
     </tr>
   `
@@ -79,16 +89,16 @@ export function validateContactPayload(payload: ContactData): string | null {
 }
 
 /**
- * 1. Email para a agência
+ * 1. Email de notificação para a agência
  * Assunto: IMAGEM 360 - {assunto}
- * Header: 100% Branco/Claro com Logo Oficial da Imagem 360
- * Sem texto "Enviado via Website Imagem 360"
+ * Header: Claro / Branco com Logo Oficial
+ * Sem menção de "Enviado via Website Imagem 360"
  */
 function buildAgencyNotificationEmail(data: ReturnType<typeof normalizeContactPayload>) {
   const subject = `IMAGEM 360 - ${data.assunto}`
 
   const text = [
-    `IMAGEM 360 - ${data.assunto}`,
+    'Nova mensagem recebida através do website:',
     '',
     `Nome: ${data.nome}`,
     `Email: ${data.email}`,
@@ -109,41 +119,36 @@ function buildAgencyNotificationEmail(data: ReturnType<typeof normalizeContactPa
       <title>${escapeHtml(subject)}</title>
     </head>
     <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:28px 16px;margin:0;">
-      <div style="max-width:640px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.04);">
+      <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.04);">
         
-        <!-- HEADER 100% CLARO COM LOGO -->
-        <div style="background-color:#ffffff;padding:28px 32px 20px 32px;border-bottom:2px solid #e8384a;">
+        <!-- HEADER CLARO COM LOGO -->
+        <div style="background-color:#ffffff;padding:26px 32px 18px 32px;border-bottom:2px solid #e8384a;">
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="vertical-align:middle;">
                 <img src="cid:logo360" alt="IMAGEM 360" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;" />
               </td>
-              <td style="vertical-align:middle;text-align:right;">
-                <span style="display:inline-block;padding:4px 10px;background-color:#fef2f2;color:#e8384a;border:1px solid #fecaca;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Novo Contacto</span>
-              </td>
             </tr>
           </table>
-          <h1 style="color:#0f172a;margin:18px 0 0 0;font-size:20px;font-weight:800;line-height:1.2;">Nova Mensagem Recebida</h1>
-          <p style="color:#64748b;margin:4px 0 0 0;font-size:13px;">Detalhes do contacto submetido através do formulário:</p>
+          <h1 style="color:#0f172a;margin:16px 0 0 0;font-size:20px;font-weight:800;line-height:1.2;">Nova Mensagem de Contacto</h1>
         </div>
 
         <!-- CORPO CLARO -->
-        <div style="padding:28px 32px;background-color:#ffffff;">
-          <h2 style="font-size:14px;color:#0f172a;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Dados do Remetente</h2>
-          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;background-color:#fafbfc;border:1px solid #edf2f7;border-radius:8px;">
+        <div style="padding:28px 32px;">
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
             ${row('Nome', data.nome)}
             ${row('Email', data.email)}
             ${data.telefone ? row('Telefone', data.telefone) : ''}
             ${row('Assunto', data.assunto)}
           </table>
 
-          <h2 style="font-size:14px;color:#0f172a;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Mensagem</h2>
-          <div style="padding:18px 20px;background-color:#f8fafc;border-left:4px solid #e8384a;border:1px solid #e2e8f0;border-left-width:4px;border-radius:6px;">
-            <p style="margin:0;font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${escapeHtml(data.mensagem)}</p>
+          <div style="margin-top:20px;padding:18px 20px;background-color:#f8fafc;border-radius:10px;border-left:4px solid #e8384a;border:1px solid #edf2f7;border-left:4px solid #e8384a;">
+            <p style="margin:0 0 8px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#e8384a;">Mensagem:</p>
+            <p style="margin:0;font-size:14px;color:#334155;line-height:1.6;white-space:pre-wrap;">${escapeHtml(data.mensagem)}</p>
           </div>
 
-          <div style="margin-top:28px;padding-top:20px;border-top:1px solid #edf2f7;display:flex;justify-content:space-between;align-items:center;">
-            <a href="mailto:${escapeHtml(data.email)}?subject=Re:%20${encodeURIComponent(subject)}" style="display:inline-block;background-color:#e8384a;color:#ffffff;text-decoration:none;padding:11px 22px;border-radius:999px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Responder a ${escapeHtml(data.nome)}</a>
+          <div style="margin-top:28px;padding-top:20px;border-top:1px solid #edf2f7;">
+            <a href="mailto:${escapeHtml(data.email)}?subject=Re:%20${encodeURIComponent(subject)}" style="display:inline-block;background-color:#e8384a;color:#ffffff;text-decoration:none;padding:11px 24px;border-radius:999px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;">Responder a ${escapeHtml(data.nome)}</a>
           </div>
         </div>
 
@@ -157,12 +162,12 @@ function buildAgencyNotificationEmail(data: ReturnType<typeof normalizeContactPa
 
 /**
  * 2. Email de confirmação para o visitante
- * Assunto: IMAGEM 360 - Recebemos a sua mensagem
- * Header: 100% Branco/Claro com Logo Oficial da Imagem 360
- * Sem texto "Enviado via Website Imagem 360"
+ * Assunto: IMAGEM 360 - {assunto}
+ * Header: Claro / Branco com Logo Oficial
+ * Sem menção de "Enviado via Website Imagem 360"
  */
 function buildClientConfirmationEmail(data: ReturnType<typeof normalizeContactPayload>) {
-  const subject = `IMAGEM 360 - Recebemos a sua mensagem`
+  const subject = `IMAGEM 360 - ${data.assunto}`
 
   const text = [
     `Olá ${data.nome},`,
@@ -187,8 +192,8 @@ function buildClientConfirmationEmail(data: ReturnType<typeof normalizeContactPa
     <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:28px 16px;margin:0;">
       <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.04);">
         
-        <!-- HEADER 100% CLARO COM LOGO -->
-        <div style="background-color:#ffffff;padding:28px 32px 20px 32px;border-bottom:2px solid #e8384a;">
+        <!-- HEADER CLARO COM LOGO -->
+        <div style="background-color:#ffffff;padding:26px 32px 18px 32px;border-bottom:2px solid #e8384a;">
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="vertical-align:middle;">
@@ -196,7 +201,7 @@ function buildClientConfirmationEmail(data: ReturnType<typeof normalizeContactPa
               </td>
             </tr>
           </table>
-          <h1 style="color:#0f172a;margin:18px 0 0 0;font-size:20px;font-weight:800;line-height:1.2;">Mensagem Recebida com Sucesso</h1>
+          <h1 style="color:#0f172a;margin:16px 0 0 0;font-size:20px;font-weight:800;line-height:1.2;">Mensagem Recebida com Sucesso</h1>
         </div>
 
         <!-- CORPO CLARO -->
@@ -204,12 +209,12 @@ function buildClientConfirmationEmail(data: ReturnType<typeof normalizeContactPa
           <p style="margin-top:0;">Olá <strong>${escapeHtml(data.nome)}</strong>,</p>
           <p>Agradecemos o seu contacto através da <strong>Imagem 360</strong>. A nossa equipa já recebeu a sua mensagem e entrará em contacto consigo com a maior brevidade possível.</p>
 
-          <table style="width:100%;border-collapse:collapse;margin:20px 0;background-color:#fafbfc;border:1px solid #edf2f7;border-radius:8px;">
+          <table style="width:100%;border-collapse:collapse;margin:20px 0;background-color:#f8fafc;border:1px solid #edf2f7;border-radius:8px;">
             ${row('Assunto', data.assunto)}
             ${row('Email de resposta', data.email)}
           </table>
 
-          <p style="margin-bottom:0;color:#64748b;">
+          <p style="margin-bottom:0;color:#64748b;margin-top:24px;">
             Com os melhores cumprimentos,<br>
             <strong style="color:#0f172a;">Equipa Imagem 360</strong><br>
             <span style="font-size:12px;color:#94a3b8;">Av. Maguiguana, 845, Maputo, Moçambique • team@imagem360.agency</span>
@@ -252,15 +257,17 @@ export async function sendContactEmail(
 
   console.info('[resend] Enviando mensagem de contacto para', to, 'com assunto:', subject)
 
-  // Prepara anexo inline com CID para o logotipo
-  const attachments = [
-    {
-      filename: 'logo_360.png',
-      content: LOGO_BASE64,
-      content_type: 'image/png',
-      cid: 'logo360',
-    },
-  ]
+  // Prepara anexo inline com CID para o logotipo oficial da Imagem 360
+  const attachments = LOGO_BASE64
+    ? [
+        {
+          filename: 'logo_360.png',
+          content: LOGO_BASE64,
+          content_type: 'image/png',
+          cid: 'logo360',
+        },
+      ]
+    : undefined
 
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
@@ -295,7 +302,7 @@ export async function sendContactEmail(
 
   console.info('[resend] Mensagem enviada com sucesso, id:', data.id)
 
-  // Enviar email de confirmação para o visitante (com o mesmo logo e formato claro)
+  // Enviar email de confirmação para o visitante (não bloqueante, com o mesmo logo e formato claro)
   try {
     const confirmation = buildClientConfirmationEmail(normalized)
     await fetch(RESEND_ENDPOINT, {

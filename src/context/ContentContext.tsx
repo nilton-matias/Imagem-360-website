@@ -14,6 +14,7 @@ interface ContentContextType {
   saveGitHubConfig: (config: GitHubConfig) => void
   isAdminOpen: boolean
   setIsAdminOpen: (open: boolean) => void
+  closeAdmin: () => void
   isAuthenticated: boolean
   login: (password: string) => boolean
   logout: () => void
@@ -73,16 +74,24 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return localStorage.getItem(STORAGE_KEY_PW) || 'admin360'
   })
 
-  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(() => {
-    // Abre automaticamente se o usuário acessou via URL #admin ou /admin
-    if (typeof window !== 'undefined') {
-      return window.location.hash === '#admin' || window.location.pathname === '/admin'
-    }
-    return false
-  })
+  // O painel NUNCA deve abrir sozinho ao carregar o site
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false)
 
-  // Sincroniza abertura via hash
+  // Função para fechar o painel e limpar qualquer #admin da barra de endereço
+  const closeAdmin = () => {
+    setIsAdminOpen(false)
+    if (typeof window !== 'undefined' && window.location.hash.includes('admin')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+  }
+
+  // Sincroniza abertura se o utilizador colocar #admin na barra de endereço intencionalmente
   useEffect(() => {
+    // Se houver #admin residual no primeiro carregamento, limpa imediatamente da barra de endereço
+    if (typeof window !== 'undefined' && window.location.hash.includes('admin')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+
     const handleHash = () => {
       if (window.location.hash === '#admin') {
         setIsAdminOpen(true)
@@ -101,7 +110,6 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error('Erro ao salvar no localStorage:', e)
     }
   }
-
 
   const saveDraftLocally = (draft: SiteContent) => {
     setContent(draft)
@@ -125,12 +133,14 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }
 
   const setAdminPassword = (pw: string) => {
-    setAdminPasswordState(pw)
-    localStorage.setItem(STORAGE_KEY_PW, pw)
+    const cleanPw = pw.trim()
+    setAdminPasswordState(cleanPw)
+    localStorage.setItem(STORAGE_KEY_PW, cleanPw)
   }
 
   const login = (password: string): boolean => {
-    if (password === adminPassword || password === 'admin360') {
+    const currentActivePassword = localStorage.getItem(STORAGE_KEY_PW) || adminPassword || 'admin360'
+    if (password.trim() === currentActivePassword.trim()) {
       setIsAuthenticated(true)
       localStorage.setItem(STORAGE_KEY_AUTH, 'true')
       return true
@@ -157,6 +167,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         saveGitHubConfig,
         isAdminOpen,
         setIsAdminOpen,
+        closeAdmin,
         isAuthenticated,
         login,
         logout,

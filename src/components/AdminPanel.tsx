@@ -10,9 +10,11 @@ export default function AdminPanel() {
     content,
     updateContent,
     resetToOriginal,
+    clearDraft,
     gitHubConfig,
     isAdminOpen,
     setIsAdminOpen,
+    closeAdmin,
     isAuthenticated,
     login,
     logout,
@@ -28,6 +30,8 @@ export default function AdminPanel() {
     message: '',
   })
   const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
 
   const [newBrand, setNewBrand] = useState({ name: '', img: '' })
@@ -101,7 +105,7 @@ export default function AdminPanel() {
             <button type="submit" style={{ width: '100%', padding: '14px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
               Entrar no Painel
             </button>
-            <button type="button" onClick={() => setIsAdminOpen(false)} style={{ width: '100%', marginTop: '10px', padding: '10px', background: 'transparent', color: ui.textMuted, border: 'none', fontSize: '12px', cursor: 'pointer' }}>
+            <button type="button" onClick={closeAdmin} style={{ width: '100%', marginTop: '10px', padding: '10px', background: 'transparent', color: ui.textMuted, border: 'none', fontSize: '12px', cursor: 'pointer' }}>
               Cancelar e voltar ao site
             </button>
           </form>
@@ -114,6 +118,7 @@ export default function AdminPanel() {
     setSaveStatus({ type: 'loading', message: 'Publicando alterações no GitHub e Vercel...' })
     const res = await publishContent(content, gitHubConfig)
     if (res.success) {
+      clearDraft()
       setSaveStatus({
         type: 'success',
         message: res.message,
@@ -149,111 +154,38 @@ export default function AdminPanel() {
             <button
               onClick={() => setAdminDark(d => !d)}
               title={adminDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+              aria-label={adminDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
               style={{
-                width: '38px',
-                height: '38px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
-                background: adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                border: `1px solid ${ui.border}`,
+                background: adminDark ? '#ffffff' : '#000000',
+                border: `1px solid ${adminDark ? '#ffffff' : '#000000'}`,
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '16px',
-                color: ui.text,
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = adminDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+                transition: 'all 0.3s',
               }}
             >
-              {adminDark ? '☀️' : '🌙'}
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z"
+                  fill={adminDark ? '#000000' : '#ffffff'}
+                />
+              </svg>
             </button>
             <button
               onClick={handlePublish}
               disabled={saveStatus.type === 'loading'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '9px 20px',
-                background: '#e8384a',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '999px',
-                fontSize: '12px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                cursor: saveStatus.type === 'loading' ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 14px rgba(232,56,74,0.35)',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                if (saveStatus.type !== 'loading') e.currentTarget.style.background = '#c42d3d'
-              }}
-              onMouseLeave={e => {
-                if (saveStatus.type !== 'loading') e.currentTarget.style.background = '#e8384a'
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '999px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(232,56,74,0.3)' }}
             >
               {saveStatus.type === 'loading' ? '⏳ Publicando...' : '🚀 Publicar Alterações'}
             </button>
-            <button
-              onClick={logout}
-              style={{
-                padding: '7px 14px',
-                background: 'transparent',
-                border: `1px solid ${ui.border}`,
-                borderRadius: '999px',
-                color: ui.textMuted,
-                fontSize: '11px',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = '#e8384a'
-                e.currentTarget.style.color = '#e8384a'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = ui.border
-                e.currentTarget.style.color = ui.textMuted
-              }}
-            >
+            <button onClick={logout} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${ui.border}`, borderRadius: '999px', color: ui.textMuted, fontSize: '12px', cursor: 'pointer' }}>
               Sair
             </button>
-            <button
-              onClick={() => setIsAdminOpen(false)}
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                background: adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                border: `1px solid ${ui.border}`,
-                color: ui.text,
-                fontSize: '15px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(232,56,74,0.15)'
-                e.currentTarget.style.color = '#e8384a'
-                e.currentTarget.style.borderColor = '#e8384a'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
-                e.currentTarget.style.color = ui.text
-                e.currentTarget.style.borderColor = ui.border
-              }}
-            >
+            <button onClick={closeAdmin} style={{ width: '36px', height: '36px', borderRadius: '50%', background: ui.inputBg, border: `1px solid ${ui.border}`, color: ui.text, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Fechar painel">
               ✕
             </button>
           </div>
@@ -370,7 +302,10 @@ export default function AdminPanel() {
                     <button
                       onClick={() => {
                         if (newBrand.name && newBrand.img) {
-                          updateContent({ ...content, clients: [...content.clients, { id: 'client_' + Date.now(), ...newBrand }] })
+                          updateContent({
+                            ...content,
+                            clients: [...content.clients, { id: 'client-' + Date.now(), ...newBrand }],
+                          })
                           setNewBrand({ name: '', img: '' })
                         }
                       }}
@@ -539,33 +474,91 @@ export default function AdminPanel() {
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Segurança do Painel</h3>
                 <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Altere a senha de acesso da área de administração.</p>
-                <div style={{ padding: '20px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px', maxWidth: '400px' }}>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <input
-                      type="password"
-                      placeholder="Nova senha"
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      style={{ flex: 1, padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
-                    />
+                <div style={{ padding: '24px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', maxWidth: '440px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: ui.textMuted, marginBottom: '6px' }}>
+                        Nova Senha (mínimo 4 caracteres)
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Digite a nova senha"
+                        value={newPassword}
+                        onChange={e => {
+                          setNewPassword(e.target.value)
+                          setPasswordError('')
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '10px', color: ui.text, fontSize: '13px' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: ui.textMuted, marginBottom: '6px' }}>
+                        Confirmar Nova Senha
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Confirme a nova senha"
+                        value={confirmPassword}
+                        onChange={e => {
+                          setConfirmPassword(e.target.value)
+                          setPasswordError('')
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '10px', color: ui.text, fontSize: '13px' }}
+                      />
+                    </div>
+
+                    {passwordError && (
+                      <p style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, margin: '2px 0 0' }}>
+                        ⚠️ {passwordError}
+                      </p>
+                    )}
+
                     <button
                       onClick={() => {
-                        if (newPassword.trim()) {
-                          setAdminPassword(newPassword.trim())
-                          setNewPassword('')
-                          setPasswordSuccess('Senha alterada com sucesso!')
-                          setTimeout(() => setPasswordSuccess(''), 4000)
+                        const trimmedNew = newPassword.trim()
+                        const trimmedConfirm = confirmPassword.trim()
+                        if (trimmedNew.length < 4) {
+                          setPasswordError('A senha deve ter pelo menos 4 caracteres.')
+                          return
                         }
+                        if (trimmedNew !== trimmedConfirm) {
+                          setPasswordError('As senhas digitadas não coincidem.')
+                          return
+                        }
+                        setAdminPassword(trimmedNew)
+                        setNewPassword('')
+                        setConfirmPassword('')
+                        setPasswordError('')
+                        setPasswordSuccess('Palavra-passe alterada com sucesso! A senha padrão admin360 foi desativada.')
                       }}
-                      style={{ padding: '12px 20px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ padding: '12px 24px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '999px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginTop: '6px' }}
                     >
-                      Salvar
+                      Salvar Nova Senha
                     </button>
                   </div>
+
                   {passwordSuccess && (
-                    <p style={{ color: '#10b981', fontSize: '13px', fontWeight: 600, margin: '10px 0 0' }}>
-                      ✓ {passwordSuccess}
-                    </p>
+                    <div style={{ marginTop: '16px', padding: '14px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '12px' }}>
+                      <p style={{ color: '#10b981', fontSize: '13px', fontWeight: 700, margin: '0 0 10px' }}>
+                        ✓ {passwordSuccess}
+                      </p>
+                      <button
+                        onClick={logout}
+                        style={{
+                          width: '100%',
+                          padding: '10px 16px',
+                          background: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '999px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Sair agora para testar nova senha →
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

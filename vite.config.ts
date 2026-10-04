@@ -2,6 +2,7 @@ import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import fs from 'node:fs'
 
 import siteConfiguration from './.figma/make/site.json'
 import { handleContactApi } from './server/contactEmail'
@@ -442,6 +443,17 @@ function apiDevServer(env: Record<string, string>): Plugin {
             }
             const rawBody = Buffer.concat(chunks).toString('utf8')
             const body = rawBody ? JSON.parse(rawBody) : {}
+
+            // Persistência física imediata no arquivo JSON do projeto (desenvolvimento)
+            if (body?.content) {
+              try {
+                const targetPath = path.resolve(__dirname, 'src/data/site-content.json')
+                fs.writeFileSync(targetPath, JSON.stringify(body.content, null, 2), 'utf8')
+                console.log('✅ Conteúdo salvo com sucesso no arquivo local:', targetPath)
+              } catch (fsErr) {
+                console.warn('⚠️ Aviso ao salvar no disco local:', fsErr)
+              }
+            }
 
             const mockRes = {
               _status: 200,
