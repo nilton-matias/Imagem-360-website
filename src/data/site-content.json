@@ -66,6 +66,11 @@
       "id": "mjd",
       "name": "Ministério da Juventude e Desporto",
       "img": "imgMJD"
+    },
+    {
+      "id": "client-1791113033278",
+      "name": "tfrds",
+      "img": "imgPBF"
     }
   ],
   "copy": {
