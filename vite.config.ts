@@ -1,14 +1,18 @@
-import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
-import fs from 'node:fs'
 
 import siteConfiguration from './.figma/make/site.json'
+import { handleContactApi } from './server/contactEmail'
+import publishHandler from './api/publish'
 
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  // Carrega variáveis do .env na raiz
+  const env = loadEnv(mode, process.cwd(), '')
+
   // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === 'development'
 
@@ -21,7 +25,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      localApiPublishPlugin(),
+      apiDevServer(env),
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),
@@ -48,127 +52,6 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
-
-function localApiPublishPlugin(): Plugin {
-  return {
-    name: 'local-api-publish',
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        if (req.url === '/api/publish') {
-          if (req.method === 'GET') {
-            res.writeHead(200, { 'Content-Type': 'application/json' })
-            return res.end(
-              JSON.stringify({
-                configured: Boolean(process.env.GITHUB_TOKEN),
-                owner: process.env.GITHUB_OWNER || '',
-                repo: process.env.GITHUB_REPO || '',
-                branch: process.env.GITHUB_BRANCH || 'main',
-              })
-            )
-          }
-
-          if (req.method === 'POST') {
-            let body = ''
-            req.on('data', chunk => {
-              body += chunk
-            })
-            req.on('end', async () => {
-              try {
-                const parsed = JSON.parse(body)
-                const content = parsed?.content
-                if (!content) {
-                  res.writeHead(400, { 'Content-Type': 'application/json' })
-                  return res.end(JSON.stringify({ success: false, message: 'Nenhum conteúdo enviado' }))
-                }
-
-                const targetPath = path.resolve(__dirname, 'src/data/site-content.json')
-                fs.writeFileSync(targetPath, JSON.stringify(content, null, 2), 'utf8')
-
-                const token = process.env.GITHUB_TOKEN
-                const owner = process.env.GITHUB_OWNER
-                const repo = process.env.GITHUB_REPO
-                const branch = process.env.GITHUB_BRANCH || 'main'
-                const filePath = process.env.GITHUB_FILE_PATH || 'src/data/site-content.json'
-
-                if (token && owner && repo) {
-                  try {
-                    let currentSha: string | undefined
-                    const getRes = await fetch(
-                      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`,
-                      {
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                          Accept: 'application/vnd.github.v3+json',
-                        },
-                      }
-                    )
-                    if (getRes.ok) {
-                      const existing = await getRes.json()
-                      currentSha = existing.sha
-                    }
-
-                    const utf8Bytes = new TextEncoder().encode(JSON.stringify(content, null, 2))
-                    let binary = ''
-                    for (let i = 0; i < utf8Bytes.length; i++) {
-                      binary += String.fromCharCode(utf8Bytes[i])
-                    }
-                    const base64Content = btoa(binary)
-
-                    const putRes = await fetch(
-                      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
-                      {
-                        method: 'PUT',
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                          Accept: 'application/vnd.github.v3+json',
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          message: parsed.message || 'Atualização de conteúdo via Painel Admin',
-                          content: base64Content,
-                          branch,
-                          sha: currentSha,
-                        }),
-                      }
-                    )
-
-                    if (putRes.ok) {
-                      const putData = await putRes.json()
-                      res.writeHead(200, { 'Content-Type': 'application/json' })
-                      return res.end(
-                        JSON.stringify({
-                          success: true,
-                          message: 'Salvo localmente e commitado no GitHub com sucesso!',
-                          commitUrl: putData.commit?.html_url,
-                        })
-                      )
-                    }
-                  } catch (e) {
-                    console.error('Falha no commit GitHub local:', e)
-                  }
-                }
-
-                res.writeHead(200, { 'Content-Type': 'application/json' })
-                return res.end(
-                  JSON.stringify({
-                    success: true,
-                    message: 'Salvo com sucesso no arquivo local (src/data/site-content.json)!',
-                  })
-                )
-              } catch (err: any) {
-                res.writeHead(500, { 'Content-Type': 'application/json' })
-                return res.end(JSON.stringify({ success: false, message: err.message }))
-              }
-            })
-            return
-          }
-        }
-        next()
-      })
-    },
-  }
-}
-
 
 type FigmaSiteConfiguration = {
   title?: string
@@ -478,6 +361,123 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
         } catch (err) {
           next(err as Error)
         }
+      })
+    },
+  }
+}
+
+/** Servidor de desenvolvimento para endpoints de API (/api/contact e /api/publish) */
+function apiDevServer(env: Record<string, string>): Plugin {
+  return {
+    name: 'imagem360-api-dev-server',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = req.url?.split('?')[0] || ''
+
+        if (url === '/api/contact') {
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 200
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+            res.end()
+            return
+          }
+
+          if (req.method === 'GET') {
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'application/json')
+            res.end(
+              JSON.stringify({
+                configured: Boolean(env.RESEND_API_KEY || process.env.RESEND_API_KEY),
+                service: 'Resend Contact API (Dev Server)',
+                to: env.CONTACT_TO_EMAIL || env.QUOTE_TO_EMAIL || process.env.CONTACT_TO_EMAIL || 'default',
+              })
+            )
+            return
+          }
+
+          if (req.method !== 'POST') {
+            res.statusCode = 405
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: 'Método não permitido. Use POST.' }))
+            return
+          }
+
+          try {
+            const chunks: Uint8Array[] = []
+            for await (const chunk of req) {
+              chunks.push(chunk)
+            }
+            const rawBody = Buffer.concat(chunks).toString('utf8')
+            const body = rawBody ? JSON.parse(rawBody) : {}
+            const result = await handleContactApi(body, { ...process.env, ...env })
+
+            res.statusCode = result.status
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(result.body))
+          } catch (error) {
+            console.error('API Contact dev server error:', error)
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: 'Erro interno ao processar contacto no servidor local.' }))
+          }
+          return
+        }
+
+        if (url === '/api/publish') {
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 200
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+            res.end()
+            return
+          }
+
+          try {
+            const chunks: Uint8Array[] = []
+            for await (const chunk of req) {
+              chunks.push(chunk)
+            }
+            const rawBody = Buffer.concat(chunks).toString('utf8')
+            const body = rawBody ? JSON.parse(rawBody) : {}
+
+            const mockRes = {
+              _status: 200,
+              _headers: {} as Record<string, string>,
+              setHeader(name: string, value: string) {
+                this._headers[name] = value
+                res.setHeader(name, value)
+              },
+              status(code: number) {
+                this._status = code
+                res.statusCode = code
+                return this
+              },
+              json(data: any) {
+                res.statusCode = this._status
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify(data))
+              },
+              end() {
+                res.statusCode = this._status
+                res.end()
+              },
+            }
+
+            Object.assign(process.env, env)
+            await publishHandler({ method: req.method, body, headers: req.headers }, mockRes)
+          } catch (error) {
+            console.error('API Publish dev server error:', error)
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: 'Erro interno ao processar publicação.' }))
+          }
+          return
+        }
+
+        next()
       })
     },
   }

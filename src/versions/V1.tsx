@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { sendContactMessage } from '../services/contactService'
 
 const NAV_LINKS = [
   { label: 'Home', href: '#home' },
@@ -37,6 +38,8 @@ export default function V1() {
   const [hoveredService, setHoveredService] = useState<number | null>(null)
   const [formData, setFormData] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
@@ -44,9 +47,19 @@ export default function V1() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setSent(true)
+    if (isSubmitting) return
+    setErrorMessage('')
+    setIsSubmitting(true)
+    const res = await sendContactMessage(formData)
+    setIsSubmitting(false)
+    if (res.success) {
+      setSent(true)
+      setFormData({ name: '', email: '', message: '' })
+    } else {
+      setErrorMessage(res.message)
+    }
   }
 
   const bg = '#f4f0e8'
@@ -292,23 +305,30 @@ export default function V1() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {errorMessage && (
+                  <div className="p-3 text-xs rounded bg-red-100 text-red-700 border border-red-300">
+                    {errorMessage}
+                  </div>
+                )}
                 {['Nome', 'Email'].map(p => (
                   <input key={p} type={p === 'Email' ? 'email' : 'text'} placeholder={p} required
+                    disabled={isSubmitting}
                     value={p === 'Nome' ? formData.name : formData.email}
                     onChange={e => setFormData({ ...formData, [p === 'Nome' ? 'name' : 'email']: e.target.value })}
                     className="px-5 py-4 text-sm outline-none bg-transparent"
-                    style={{ border: `1px solid ${border}`, color: fg }}
+                    style={{ border: `1px solid ${border}`, color: fg, opacity: isSubmitting ? 0.6 : 1 }}
                     onFocus={e => (e.currentTarget.style.borderColor = accent)} onBlur={e => (e.currentTarget.style.borderColor = border)} />
                 ))}
                 <textarea placeholder="Mensagem" required rows={5} value={formData.message}
+                  disabled={isSubmitting}
                   onChange={e => setFormData({ ...formData, message: e.target.value })}
                   className="px-5 py-4 text-sm outline-none bg-transparent resize-none"
-                  style={{ border: `1px solid ${border}`, color: fg }}
+                  style={{ border: `1px solid ${border}`, color: fg, opacity: isSubmitting ? 0.6 : 1 }}
                   onFocus={e => (e.currentTarget.style.borderColor = accent)} onBlur={e => (e.currentTarget.style.borderColor = border)} />
-                <button type="submit" className="font-display font-bold text-sm uppercase tracking-[0.18em] px-10 py-4 text-white transition-all"
+                <button type="submit" disabled={isSubmitting} className="font-display font-bold text-sm uppercase tracking-[0.18em] px-10 py-4 text-white transition-all cursor-pointer disabled:opacity-60"
                   style={{ background: accent }}
-                  onMouseEnter={e => (e.currentTarget.style.background = accentHover)} onMouseLeave={e => (e.currentTarget.style.background = accent)}>
-                  Enviar →
+                  onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.background = accentHover }} onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.background = accent }}>
+                  {isSubmitting ? 'A enviar...' : 'Enviar →'}
                 </button>
               </form>
             )}

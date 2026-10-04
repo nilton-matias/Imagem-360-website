@@ -1,6 +1,6 @@
 // Vercel Serverless Function: /api/publish
 export default async function handler(req: any, res: any) {
-  // Configurar CORS básico se necessário
+  // Configurar CORS
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
@@ -9,18 +9,31 @@ export default async function handler(req: any, res: any) {
     return res.status(200).end()
   }
 
+  // Suporte a variáveis sem o prefixo restrito GITHUB_ (GitHub Secrets proíbe prefixo GITHUB_)
+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || process.env.GIT_TOKEN
+  let owner = process.env.GH_OWNER || process.env.GITHUB_OWNER || process.env.GIT_OWNER || ''
+  let repo = process.env.GH_REPO || process.env.GITHUB_REPO || process.env.GIT_REPO || ''
+  const branch = process.env.GH_BRANCH || process.env.GITHUB_BRANCH || process.env.GIT_BRANCH || 'main'
+  const filePath = process.env.GH_FILE_PATH || process.env.GITHUB_FILE_PATH || 'src/data/site-content.json'
+
+  // Limpeza caso o repositório seja fornecido como URL completa (ex: https://github.com/user/repo)
+  if (repo.includes('github.com/')) {
+    const parts = repo.replace(/\.git$/, '').split('github.com/')[1].split('/')
+    if (parts.length >= 2) {
+      if (!owner) owner = parts[0]
+      repo = parts[1]
+    }
+  }
+
   // Permite verificar status das variáveis de ambiente
   if (req.method === 'GET') {
-    const isConfigured = Boolean(
-      process.env.GITHUB_TOKEN &&
-      process.env.GITHUB_OWNER &&
-      process.env.GITHUB_REPO
-    )
+    const isConfigured = Boolean(token && owner && repo)
     return res.status(200).json({
       configured: isConfigured,
-      owner: process.env.GITHUB_OWNER || '',
-      repo: process.env.GITHUB_REPO || '',
-      branch: process.env.GITHUB_BRANCH || 'main',
+      owner,
+      repo,
+      branch,
+      note: 'Variáveis aceitas: GH_TOKEN (ou GITHUB_TOKEN), GH_OWNER, GH_REPO, GH_BRANCH',
     })
   }
 
@@ -28,16 +41,11 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ success: false, message: 'Método não permitido. Use POST.' })
   }
 
-  const token = process.env.GITHUB_TOKEN
-  const owner = process.env.GITHUB_OWNER
-  const repo = process.env.GITHUB_REPO
-  const branch = process.env.GITHUB_BRANCH || 'main'
-  const filePath = process.env.GITHUB_FILE_PATH || 'src/data/site-content.json'
-
   if (!token || !owner || !repo) {
     return res.status(500).json({
       success: false,
-      message: 'Variáveis de ambiente do GitHub não configuradas no servidor/Vercel (GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO).',
+      message:
+        'Variáveis de ambiente do GitHub não configuradas no servidor/Vercel (use GH_TOKEN, GH_OWNER e GH_REPO, pois o GitHub Secrets não aceita nomes iniciados por GITHUB_).',
     })
   }
 
@@ -68,7 +76,7 @@ export default async function handler(req: any, res: any) {
     } else if (getRes.status !== 404) {
       return res.status(getRes.status).json({
         success: false,
-        message: `Erro ao consultar o arquivo no GitHub (${getRes.status}). Verifique o token e permissões.`,
+        message: `Erro ao consultar o arquivo no GitHub (${getRes.status}). Verifique o token (GH_TOKEN) e permissões.`,
       })
     }
 

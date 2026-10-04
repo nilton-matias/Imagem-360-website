@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSiteContent } from '../context/ContentContext'
 import { resolveImageSource } from '../utils/imageMap'
+import { sendContactMessage } from '../services/contactService'
 import imgLAM    from '../assets/71b4ddcb-f27b-4cf2-a9cb-03a003079d28.png'
 import imgMAHS   from '../assets/43125cf7-99ea-49eb-9d83-2778192b4e55.png'
 import imgPetro  from '../assets/550ee893-25d8-42d1-a998-66ea9bbe171f.png'
@@ -175,6 +176,9 @@ export default function V3() {
   const [activeCanal, setActiveCanal] = useState(0)
   const [form, setForm]         = useState({ name: '', email: '', subject: '', message: '' })
   const [sent, setSent]         = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [focus, setFocus]       = useState<string | null>(null)
 
   const { content, setIsAdminOpen, hasLocalDraft } = useSiteContent()
@@ -700,28 +704,138 @@ export default function V3() {
           {/* Formulário */}
           <div style={{ background: t.glass, padding: '38px', borderRadius: '24px', border: `1px solid ${t.glassBorder}`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: t.shadow, transition: 'all 0.3s' }}>
             {sent ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '340px', gap: '16px' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: R, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 6px 24px ${R}55` }}>✓</div>
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '15px', color: t.fg }}>{copy.contact[12]}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '340px', gap: '16px', textAlign: 'center' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: R, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', boxShadow: `0 6px 24px ${R}55` }}>✓</div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '18px', color: t.fg, margin: 0 }}>
+                  {copy.contact[12]}
+                </h3>
+                <p style={{ fontSize: '13px', color: t.fgMuted, maxWidth: '340px', lineHeight: 1.6, margin: 0 }}>
+                  {successMessage || (lang === 'pt' ? 'Recebemos a sua mensagem através do Resend. Entraremos em contacto brevemente.' : 'We received your message via Resend. We will be in touch shortly.')}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSent(false)
+                    setErrorMessage('')
+                    setSuccessMessage('')
+                  }}
+                  style={{
+                    marginTop: '8px',
+                    padding: '10px 22px',
+                    background: 'transparent',
+                    color: R,
+                    border: `1px solid ${R}`,
+                    borderRadius: '10px',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = `${R}15`
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'transparent'
+                  }}>
+                  {lang === 'pt' ? 'Enviar outra mensagem' : 'Send another message'}
+                </button>
               </div>
             ) : (
-              <form onSubmit={e => { e.preventDefault(); setSent(true) }} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', color: t.fg, marginBottom: '6px', transition: 'color 0.3s' }}>{copy.contact[7]}</p>
+              <form
+                onSubmit={async e => {
+                  e.preventDefault()
+                  if (isSubmitting) return
+                  setErrorMessage('')
+                  setIsSubmitting(true)
+
+                  const res = await sendContactMessage(form)
+                  setIsSubmitting(false)
+
+                  if (res.success) {
+                    setSuccessMessage(res.message)
+                    setSent(true)
+                    setForm({ name: '', email: '', subject: '', message: '' })
+                  } else {
+                    setErrorMessage(res.message)
+                  }
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', color: t.fg, marginBottom: '2px', transition: 'color 0.3s' }}>{copy.contact[7]}</p>
+
+                {errorMessage && (
+                  <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'rgba(232,56,74,0.1)', border: '1px solid rgba(232,56,74,0.3)', color: '#e8384a', fontSize: '13px', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
                 {[['name',copy.contact[8],'text'],['email','Email','email'],['subject',copy.contact[9],'text']].map(([f,p,type]) => (
                   <input key={f} type={type} placeholder={p} required={f !== 'subject'}
+                    disabled={isSubmitting}
                     value={form[f as keyof typeof form]}
                     onChange={e => setForm({ ...form, [f]: e.target.value })}
                     onFocus={() => setFocus(f)} onBlur={() => setFocus(null)}
-                    style={inp(f)} />
+                    style={{
+                      ...inp(f),
+                      opacity: isSubmitting ? 0.7 : 1,
+                      cursor: isSubmitting ? 'not-allowed' : 'text',
+                    }} />
                 ))}
-                <textarea placeholder={copy.contact[10]} required rows={5} value={form.message}
+                <textarea placeholder={copy.contact[10]} required rows={5}
+                  disabled={isSubmitting}
+                  value={form.message}
                   onChange={e => setForm({ ...form, message: e.target.value })}
                   onFocus={() => setFocus('message')} onBlur={() => setFocus(null)}
-                  style={{ ...inp('message'), resize: 'none' }} />
-                <button type="submit" style={{ padding: '13px', background: R, color: '#fff', border: 'none', borderRadius: '12px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.14em', cursor: 'pointer', transition: 'background 0.2s', marginTop: '4px', boxShadow: `0 4px 18px ${R}44` }}
-                  onMouseEnter={e => (e.currentTarget.style.background = R_DARK)}
-                  onMouseLeave={e => (e.currentTarget.style.background = R)}>
-                  {copy.contact[11]}
+                  style={{
+                    ...inp('message'),
+                    resize: 'none',
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'text',
+                  }} />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    padding: '13px',
+                    background: isSubmitting ? `${R}99` : R,
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.14em',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    marginTop: '4px',
+                    boxShadow: isSubmitting ? 'none' : `0 4px 18px ${R}44`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isSubmitting) e.currentTarget.style.background = R_DARK
+                  }}
+                  onMouseLeave={e => {
+                    if (!isSubmitting) e.currentTarget.style.background = R
+                  }}>
+                  {isSubmitting ? (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                        <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+                      </svg>
+                      {lang === 'pt' ? 'A enviar...' : 'Sending...'}
+                    </>
+                  ) : (
+                    copy.contact[11]
+                  )}
                 </button>
               </form>
             )}

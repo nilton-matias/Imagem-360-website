@@ -280,7 +280,7 @@ export default function AdminPanel() {
                     <button
                       onClick={() => {
                         if (newBrand.name && newBrand.img) {
-                          updateContent({ ...content, clients: [...content.clients, { ...newBrand }] })
+                          updateContent({ ...content, clients: [...content.clients, { id: 'client_' + Date.now(), ...newBrand }] })
                           setNewBrand({ name: '', img: '' })
                         }
                       }}
