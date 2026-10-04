@@ -121,7 +121,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({
       success: true,
-      message: 'Alterações publicadas com sucesso! A Vercel iniciou a atualização automática do site.',
+      message: 'Alterações publicadas com sucesso! A iniciar a actualização do site.',
       commitUrl,
     })
   } catch (err: unknown) {

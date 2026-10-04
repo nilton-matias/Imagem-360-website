@@ -115,7 +115,7 @@ export default function AdminPanel() {
   }
 
   const handlePublish = async () => {
-    setSaveStatus({ type: 'loading', message: 'Publicando alterações no GitHub e Vercel...' })
+    setSaveStatus({ type: 'loading', message: 'Publicando alterações...' })
     const res = await publishContent(content, gitHubConfig)
     if (res.success) {
       clearDraft()
@@ -194,11 +194,6 @@ export default function AdminPanel() {
         {saveStatus.type && (
           <div style={{ padding: '10px 24px', background: saveStatus.type === 'success' ? '#10b981' : saveStatus.type === 'error' ? '#ef4444' : '#3b82f6', color: '#fff', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>{saveStatus.message}</span>
-            {saveStatus.url && (
-              <a href={saveStatus.url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline', fontSize: '12px' }}>
-                Ver no GitHub →
-              </a>
-            )}
           </div>
         )}
 
