@@ -2,6 +2,7 @@ import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import fs from 'node:fs'
 
 import siteConfiguration from './.figma/make/site.json'
 
@@ -18,8 +19,9 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
-react(),
+      react(),
       tailwindcss(),
+      localApiPublishPlugin(),
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),
@@ -46,6 +48,127 @@ react(),
     },
   }
 })
+
+function localApiPublishPlugin(): Plugin {
+  return {
+    name: 'local-api-publish',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url === '/api/publish') {
+          if (req.method === 'GET') {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            return res.end(
+              JSON.stringify({
+                configured: Boolean(process.env.GITHUB_TOKEN),
+                owner: process.env.GITHUB_OWNER || '',
+                repo: process.env.GITHUB_REPO || '',
+                branch: process.env.GITHUB_BRANCH || 'main',
+              })
+            )
+          }
+
+          if (req.method === 'POST') {
+            let body = ''
+            req.on('data', chunk => {
+              body += chunk
+            })
+            req.on('end', async () => {
+              try {
+                const parsed = JSON.parse(body)
+                const content = parsed?.content
+                if (!content) {
+                  res.writeHead(400, { 'Content-Type': 'application/json' })
+                  return res.end(JSON.stringify({ success: false, message: 'Nenhum conteúdo enviado' }))
+                }
+
+                const targetPath = path.resolve(__dirname, 'src/data/site-content.json')
+                fs.writeFileSync(targetPath, JSON.stringify(content, null, 2), 'utf8')
+
+                const token = process.env.GITHUB_TOKEN
+                const owner = process.env.GITHUB_OWNER
+                const repo = process.env.GITHUB_REPO
+                const branch = process.env.GITHUB_BRANCH || 'main'
+                const filePath = process.env.GITHUB_FILE_PATH || 'src/data/site-content.json'
+
+                if (token && owner && repo) {
+                  try {
+                    let currentSha: string | undefined
+                    const getRes = await fetch(
+                      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`,
+                      {
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                          Accept: 'application/vnd.github.v3+json',
+                        },
+                      }
+                    )
+                    if (getRes.ok) {
+                      const existing = await getRes.json()
+                      currentSha = existing.sha
+                    }
+
+                    const utf8Bytes = new TextEncoder().encode(JSON.stringify(content, null, 2))
+                    let binary = ''
+                    for (let i = 0; i < utf8Bytes.length; i++) {
+                      binary += String.fromCharCode(utf8Bytes[i])
+                    }
+                    const base64Content = btoa(binary)
+
+                    const putRes = await fetch(
+                      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
+                      {
+                        method: 'PUT',
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                          Accept: 'application/vnd.github.v3+json',
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          message: parsed.message || 'Atualização de conteúdo via Painel Admin',
+                          content: base64Content,
+                          branch,
+                          sha: currentSha,
+                        }),
+                      }
+                    )
+
+                    if (putRes.ok) {
+                      const putData = await putRes.json()
+                      res.writeHead(200, { 'Content-Type': 'application/json' })
+                      return res.end(
+                        JSON.stringify({
+                          success: true,
+                          message: 'Salvo localmente e commitado no GitHub com sucesso!',
+                          commitUrl: putData.commit?.html_url,
+                        })
+                      )
+                    }
+                  } catch (e) {
+                    console.error('Falha no commit GitHub local:', e)
+                  }
+                }
+
+                res.writeHead(200, { 'Content-Type': 'application/json' })
+                return res.end(
+                  JSON.stringify({
+                    success: true,
+                    message: 'Salvo com sucesso no arquivo local (src/data/site-content.json)!',
+                  })
+                )
+              } catch (err: any) {
+                res.writeHead(500, { 'Content-Type': 'application/json' })
+                return res.end(JSON.stringify({ success: false, message: err.message }))
+              }
+            })
+            return
+          }
+        }
+        next()
+      })
+    },
+  }
+}
+
 
 type FigmaSiteConfiguration = {
   title?: string
