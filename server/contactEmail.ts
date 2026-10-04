@@ -328,7 +328,6 @@ export async function sendContactEmail(
         subject: confirmation.subject,
         text: confirmation.text,
         html: confirmation.html,
-        attachments,
       }),
     }).catch(err => {
       console.warn('[resend] Confirmação ao cliente não enviada:', err?.message || err)
