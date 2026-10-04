@@ -154,7 +154,7 @@ export async function publishContent(
 
     return {
       success: false,
-      message: data.message || 'Não foi possível publicar. Verifique as variáveis de ambiente GH_TOKEN, GH_OWNER e GH_REPO no painel da Vercel/GitHub (o GitHub Secrets não aceita nomes que comecem por GITHUB_).',
+      message: data.message || 'Não foi possível publicar. Verifique as variáveis de ambiente GITHUB_TOKEN, GITHUB_OWNER e GITHUB_REPO no painel da Vercel.',
     }
   } catch (err: unknown) {
     if (config?.token && config?.owner && config?.repo) {

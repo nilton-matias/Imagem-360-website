@@ -34,3 +34,4 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Erro inesperado ao processar a mensagem.' })
   }
 }
+

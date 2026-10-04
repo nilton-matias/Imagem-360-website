@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { sendContactMessage } from '../services/contactService'
 import heroImg  from '../assets/hero.png'
 import imgLAM    from '../assets/71b4ddcb-f27b-4cf2-a9cb-03a003079d28.png'
 import imgMAHS   from '../assets/43125cf7-99ea-49eb-9d83-2778192b4e55.png'
@@ -139,8 +138,6 @@ export default function V2() {
   const dragState   = useRef({ dragging: false, startX: 0, scrollLeft: 0 })
   const [form, setForm]           = useState({ name: '', email: '', subject: '', message: '' })
   const [sent, setSent]           = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
   const statsRef = useRef<HTMLDivElement>(null)
   const statsOn  = useInView(statsRef as React.RefObject<Element>)
 
@@ -544,58 +541,29 @@ export default function V2() {
           {/* Formulário */}
           <div style={{ background: WHITE, borderRadius: '32px', padding: 'clamp(36px,5vw,52px)', border: `1px solid ${R_MID}`, boxShadow: `0 4px 28px rgba(232,56,74,0.07)` }}>
             {sent ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '360px', gap: '16px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '360px', gap: '16px' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: R, color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 6px 24px ${R}55` }}>✓</div>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '15px', color: DARK }}>Obrigado pelo envio!</p>
-                <p style={{ fontSize: '13px', color: MUTED, maxWidth: '320px', lineHeight: 1.6 }}>Recebemos a sua mensagem através do Resend e entraremos em contacto brevemente.</p>
-                <button
-                  type="button"
-                  onClick={() => setSent(false)}
-                  style={{ marginTop: '8px', padding: '8px 18px', background: 'transparent', color: R, border: `1px solid ${R}`, borderRadius: '999px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
-                >
-                  Enviar outra mensagem
-                </button>
               </div>
             ) : (
-              <form onSubmit={async e => {
-                e.preventDefault()
-                if (isSubmitting) return
-                setErrorMessage('')
-                setIsSubmitting(true)
-                const res = await sendContactMessage(form)
-                setIsSubmitting(false)
-                if (res.success) {
-                  setSent(true)
-                  setForm({ name: '', email: '', subject: '', message: '' })
-                } else {
-                  setErrorMessage(res.message)
-                }
-              }} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={e => { e.preventDefault(); setSent(true) }} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '22px', color: DARK, marginBottom: '6px' }}>Envie-nos uma mensagem</p>
-                {errorMessage && (
-                  <div style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(232,56,74,0.1)', border: '1px solid rgba(232,56,74,0.3)', color: R, fontSize: '13px' }}>
-                    {errorMessage}
-                  </div>
-                )}
                 {[['name','Nome','text'],['email','Email','email'],['subject','Assunto','text']].map(([f,p,type]) => (
                   <input key={f} type={type} placeholder={p} required={f !== 'subject'}
-                    disabled={isSubmitting}
                     value={form[f as keyof typeof form]}
                     onChange={e => setForm({ ...form, [f]: e.target.value })}
                     onFocus={() => setFocus(f)} onBlur={() => setFocus(null)}
-                    style={{ ...inp(f), opacity: isSubmitting ? 0.6 : 1 }} />
+                    style={inp(f)} />
                 ))}
                 <textarea placeholder="Mensagem" required rows={5} value={form.message}
-                  disabled={isSubmitting}
                   onChange={e => setForm({ ...form, message: e.target.value })}
                   onFocus={() => setFocus('message')} onBlur={() => setFocus(null)}
-                  style={{ ...inp('message'), resize: 'none', opacity: isSubmitting ? 0.6 : 1 }} />
+                  style={{ ...inp('message'), resize: 'none' }} />
                 <button type="submit"
-                  disabled={isSubmitting}
-                  style={{ padding: '14px', background: isSubmitting ? `${R}99` : R, color: WHITE, border: 'none', borderRadius: '999px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.14em', cursor: isSubmitting ? 'not-allowed' : 'pointer', marginTop: '4px', boxShadow: `0 4px 18px ${R}44`, transition: 'background 0.2s' }}
-                  onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.background = R_DARK }}
-                  onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.background = R }}>
-                  {isSubmitting ? 'A enviar...' : 'Enviar mensagem →'}
+                  style={{ padding: '14px', background: R, color: WHITE, border: 'none', borderRadius: '999px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.14em', cursor: 'pointer', marginTop: '4px', boxShadow: `0 4px 18px ${R}44`, transition: 'background 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = R_DARK)}
+                  onMouseLeave={e => (e.currentTarget.style.background = R)}>
+                  Enviar mensagem →
                 </button>
               </form>
             )}

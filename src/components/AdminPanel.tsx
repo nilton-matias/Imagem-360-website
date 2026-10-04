@@ -149,21 +149,111 @@ export default function AdminPanel() {
             <button
               onClick={() => setAdminDark(d => !d)}
               title={adminDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-              style={{ padding: '8px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                border: `1px solid ${ui.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '16px',
+                color: ui.text,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = adminDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+              }}
             >
-              {adminDark ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+              {adminDark ? '☀️' : '🌙'}
             </button>
             <button
               onClick={handlePublish}
               disabled={saveStatus.type === 'loading'}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(232,56,74,0.3)' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '9px 20px',
+                background: '#e8384a',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                fontSize: '12px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                cursor: saveStatus.type === 'loading' ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 14px rgba(232,56,74,0.35)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => {
+                if (saveStatus.type !== 'loading') e.currentTarget.style.background = '#c42d3d'
+              }}
+              onMouseLeave={e => {
+                if (saveStatus.type !== 'loading') e.currentTarget.style.background = '#e8384a'
+              }}
             >
               {saveStatus.type === 'loading' ? '⏳ Publicando...' : '🚀 Publicar Alterações'}
             </button>
-            <button onClick={logout} style={{ padding: '8px 14px', background: 'transparent', border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.textMuted, fontSize: '12px', cursor: 'pointer' }}>
+            <button
+              onClick={logout}
+              style={{
+                padding: '7px 14px',
+                background: 'transparent',
+                border: `1px solid ${ui.border}`,
+                borderRadius: '999px',
+                color: ui.textMuted,
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = '#e8384a'
+                e.currentTarget.style.color = '#e8384a'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = ui.border
+                e.currentTarget.style.color = ui.textMuted
+              }}
+            >
               Sair
             </button>
-            <button onClick={() => setIsAdminOpen(false)} style={{ width: '34px', height: '34px', borderRadius: '50%', background: ui.inputBg, border: `1px solid ${ui.border}`, color: ui.text, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <button
+              onClick={() => setIsAdminOpen(false)}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                border: `1px solid ${ui.border}`,
+                color: ui.text,
+                fontSize: '15px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(232,56,74,0.15)'
+                e.currentTarget.style.color = '#e8384a'
+                e.currentTarget.style.borderColor = '#e8384a'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = adminDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+                e.currentTarget.style.color = ui.text
+                e.currentTarget.style.borderColor = ui.border
+              }}
+            >
               ✕
             </button>
           </div>
