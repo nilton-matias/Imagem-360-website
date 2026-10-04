@@ -1,0 +1,11 @@
+{
+  "title": "Mockups",
+  "description": "This web application offers a modern and minimalist design service, creating visually stunning and unique websites tailored to individual brand identities.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

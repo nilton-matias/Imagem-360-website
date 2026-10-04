@@ -1,0 +1,176 @@
+{
+  "productLink": "https://360-message.com",
+  "stats": [
+    {
+      "id": "stat-1",
+      "value": 50,
+      "suffix": "+",
+      "prefix": false,
+      "labelPt": "Campanhas",
+      "labelEn": "Campaigns"
+    },
+    {
+      "id": "stat-2",
+      "value": 11,
+      "suffix": "",
+      "prefix": false,
+      "labelPt": "Anos no mercado",
+      "labelEn": "Years in the market"
+    },
+    {
+      "id": "stat-3",
+      "value": 3,
+      "suffix": "+ de ",
+      "prefix": true,
+      "labelPt": "Canais integrados",
+      "labelEn": "Integrated channels"
+    }
+  ],
+  "clients": [
+    {
+      "id": "lam",
+      "name": "LAM — Linhas Aéreas de Moçambique",
+      "img": "imgLAM"
+    },
+    {
+      "id": "mahs",
+      "name": "MAHS — Mozambique Airport Handling Services",
+      "img": "imgMAHS"
+    },
+    {
+      "id": "petrogas",
+      "name": "Petrogás",
+      "img": "imgPetro"
+    },
+    {
+      "id": "amopao",
+      "name": "AMOPÃO",
+      "img": "imgAmopao"
+    },
+    {
+      "id": "pbf",
+      "name": "PBF / ANC",
+      "img": "imgPBF"
+    },
+    {
+      "id": "solido",
+      "name": "Microbanco Sólido",
+      "img": "imgSolido"
+    },
+    {
+      "id": "jogabets",
+      "name": "Joga Bets",
+      "img": "imgJogaBets"
+    },
+    {
+      "id": "mjd",
+      "name": "Ministério da Juventude e Desporto",
+      "img": "imgMJD"
+    }
+  ],
+  "copy": {
+    "pt": {
+      "nav": ["Serviços", "Quem Somos", "Impacto", "Marcas", "360-Message", "Contacto"],
+      "hero": [
+        "A sua marca nos canais",
+        "indispensáveis.",
+        "Publicitamos com educação, projetando as melhores soluções de comunicação para as marcas que querem crescer em qualquer parte do mundo.",
+        "Explorar serviços"
+      ],
+      "services": ["O que fazemos", "Várias ações aplicadas.", "Um só parceiro.", "Serviços incluídos"],
+      "impact": ["Impacto", "Números que", "comprovam."],
+      "about": ["Quem somos", "O pensamento", "fora da caixa."],
+      "brands": [
+        "Marcas que confiam em nós",
+        "Empresas moçambicanas e internacionais que escolheram a Imagem 360 como parceira de trabalho."
+      ],
+      "product": [
+        "Produto — 360-Message",
+        "A comunicação",
+        "da sua marca,",
+        "numa só plataforma.",
+        "SMS, Email e USSD integrados na plataforma multicanal, rápida e feita para o mercado nacional e internacional.",
+        "Experimentar o 360-Message"
+      ],
+      "contact": [
+        "Contacto",
+        "Vamos",
+        "conversar.",
+        "Estamos ansiosos pelo seu contacto!",
+        "Endereço",
+        "Ver no Google Maps",
+        "Telefone",
+        "Envie-nos uma mensagem",
+        "Nome",
+        "Assunto",
+        "Mensagem",
+        "Enviar mensagem",
+        "Obrigado pelo envio!"
+      ]
+    },
+    "en": {
+      "nav": ["Services", "About Us", "Impact", "Brands", "360-Message", "Contact"],
+      "hero": [
+        "Your brand across the",
+        "essential channels.",
+        "We advertise through education, designing the best communication solutions for brands that want to grow anywhere in the world.",
+        "Explore services"
+      ],
+      "services": ["What we do", "Multiple actions applied.", "One partner.", "Included services"],
+      "impact": ["Impact", "Numbers that", "prove it."],
+      "about": ["About us", "Thinking", "outside the box."],
+      "brands": [
+        "Brands that trust us",
+        "Mozambican and international companies that chose Imagem 360 as their working partner."
+      ],
+      "product": [
+        "Product — 360-Message",
+        "Your brand’s",
+        "communication,",
+        "on one platform.",
+        "SMS, Email and USSD integrated into a fast multichannel platform built for national and international markets.",
+        "Try 360-Message"
+      ],
+      "contact": [
+        "Contact",
+        "Let’s",
+        "talk.",
+        "We look forward to hearing from you!",
+        "Address",
+        "View on Google Maps",
+        "Phone",
+        "Send us a message",
+        "Name",
+        "Subject",
+        "Message",
+        "Send message",
+        "Thank you for your message!"
+      ]
+    }
+  },
+  "contactInfo": {
+    "email": "team@imagem360.agency",
+    "phones": ["(+258) 834920306", "(+258) 875500828"],
+    "addressPt": "Bairro Central, Av. Maguiguana nº 1245, 1º Andar, Flat 10. Maputo - Moçambique",
+    "addressEn": "Bairro Central, Av. Maguiguana nº 1245, 1st Floor, Flat 10. Maputo - Mozambique",
+    "mapsUrl": "https://maps.google.com"
+  },
+  "aboutCards": {
+    "pt": [
+      { "l": "Visão", "v": "Elevar a criatividade no avanço de marcas nacionais e internacionais." },
+      { "l": "Missão", "v": "Compromisso com o crescimento estratégico e desenvolvimento a longo prazo das marcas." },
+      { "l": "Valores", "v": "Responsabilidade ambiental · Responsabilidade social · Qualidade · Eficácia · Integridade · Inovação" },
+      { "l": "Inovação", "v": "Inovamos trazendo sentido e vida à nossa comunicação." },
+      { "l": "Canais", "v": "Temos os melhores canais de marketing digital e publicidade out of home." },
+      { "l": "Equipa", "v": "Contamos com uma equipa dedicada, genial e super responsável." }
+    ],
+    "en": [
+      { "l": "Vision", "v": "Elevating creativity to advance national and international brands." },
+      { "l": "Mission", "v": "Commitment to the strategic growth and long-term development of brands." },
+      { "l": "Values", "v": "Environmental responsibility · Social responsibility · Quality · Effectiveness · Integrity · Innovation" },
+      { "l": "Innovation", "v": "We innovate, bringing meaning and life to our communication." },
+      { "l": "Channels", "v": "We offer the best digital marketing and out-of-home advertising channels." },
+      { "l": "Team", "v": "We count on a dedicated, brilliant and highly responsible team." }
+    ]
+  }
+}
