@@ -116,7 +116,7 @@ export default function AdminPanel() {
 
   const handlePublish = async () => {
     setSaveStatus({ type: 'loading', message: 'Publicando alterações...' })
-    const res = await publishContent(content)
+    const res = await publishContent(content, gitHubConfig)
     if (res.success) {
       clearDraft()
       setSaveStatus({
