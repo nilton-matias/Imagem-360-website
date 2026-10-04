@@ -80,7 +80,7 @@ const COPY = {
     services: ['O que fazemos', 'Várias ações aplicadas.', 'Um só parceiro.', 'Serviços incluídos'],
     impact: ['Impacto', 'Números que', 'comprovam.'],
     about: ['Quem somos', 'O pensamento', 'fora da caixa.'],
-    brands: ['Marcas que confiam em nós', 'Empresas moçambicanas e internacionais que escolheram a Imagem 360 como parceira de trabalho.'],
+    brands: ['Marcas que confiam em nós', 'Empresas moçambicanas e internacionais que escolheram a nossa marca como parceira de trabalho.'],
     product: ['Produto · 360-Message', 'A comunicação', 'da sua marca,', 'numa só plataforma.', 'SMS, Email e USSD integrados na plataforma multicanal, rápida e feita para o mercado nacional e internacional.', 'Experimentar o 360-Message'],
     contact: ['Contacto', 'Vamos', 'conversar.', 'Estamos ansiosos pelo seu contacto!', 'Endereço', 'Ver no Google Maps', 'Telefone', 'Envie-nos uma mensagem', 'Nome', 'Assunto', 'Mensagem', 'Enviar mensagem', 'Obrigado pelo envio!'],
   },
@@ -90,7 +90,7 @@ const COPY = {
     services: ['What we do', 'Multiple actions applied.', 'One partner.', 'Included services'],
     impact: ['Impact', 'Numbers that', 'prove it.'],
     about: ['About us', 'Thinking', 'outside the box.'],
-    brands: ['Brands that trust us', 'Mozambican and international companies that chose Imagem 360 as their working partner.'],
+    brands: ['Brands that trust us', 'Mozambican and international companies that chose our brand as their working partner.'],
     product: ['Product · 360-Message', 'Your brand’s', 'communication,', 'on one platform.', 'SMS, Email and USSD integrated into a fast multichannel platform built for national and international markets.', 'Try 360-Message'],
     contact: ['Contact', 'Let’s', 'talk.', 'We look forward to hearing from you!', 'Address', 'View on Google Maps', 'Phone', 'Send us a message', 'Name', 'Subject', 'Message', 'Send message', 'Thank you for your message!'],
   },
@@ -386,7 +386,6 @@ export default function V3() {
                 </g>
               ))}
             </svg>
-            // DEPOIS:
             <div style={{ position: 'relative', zIndex: 2, width: '230px', height: '230px', borderRadius: '50%', padding: '34px', background: t.glass, border: `1px solid ${dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)'}`, boxShadow: dark ? '0 24px 70px rgba(0,0,0,0.65)' : '0 24px 70px rgba(0,0,0,0.13)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.3s' }}>
               <img src={logoImagem360 || '/logo_360.png'} alt="Imagem 360" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: dark ? 'brightness(1.8) contrast(0.9)' : 'none', transition: 'filter 0.3s' }} />
             </div>
@@ -742,7 +741,6 @@ export default function V3() {
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '15px', color: t.fg }}>{copy.contact[12]}</p>
               </div>
             ) : (
-              // DEPOIS:
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', color: t.fg, marginBottom: '6px', transition: 'color 0.3s' }}>{copy.contact[7]}</p>
                 {[['name', copy.contact[8], 'text'], ['email', 'Email', 'email'], ['subject', copy.contact[9], 'text']].map(([f, p, type]) => (

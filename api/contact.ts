@@ -52,9 +52,9 @@ export default async function handler(req: any, res: any) {
       <!DOCTYPE html>
       <html>
       <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:24px 16px;margin:0;">
-        <div style="max-width:580px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
-          <div style="background-color:#ffffff;padding:20px 28px;border-bottom:2px solid #e8384a;display:flex;align-items:center;gap:12px;">
-            <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;">IMAGEM 360</div>
+                <div style="max-width:580px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
+          <div style="background-color:#ffffff;padding:20px 28px;border-bottom:2px solid #e8384a;display:flex;align-items:center;gap:16px;">
+            <img src="https://cdn.jsdelivr.net/gh/nilton-matias/Imagem-360-website@main/public/logo_360.png" alt="Imagem 360" style="height:36px;width:auto;display:block;border:0;" />
             <h1 style="color:#0f172a;margin:0;font-size:18px;font-weight:800;line-height:1.2;">Nova Mensagem de Contacto</h1>
           </div>
           <div style="padding:28px;">
