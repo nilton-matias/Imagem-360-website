@@ -16,6 +16,8 @@ export interface ContactData {
 }
 
 // Carrega o logotipo oficial da Imagem 360 em base64 para inclusão inline (CID)
+// DEPOIS:
+// Carrega o logotipo oficial da Imagem 360 em base64
 let LOGO_BASE64 = ''
 try {
   const logoPath = path.resolve(process.cwd(), 'src/imports/logo_novo_360.png')
@@ -23,7 +25,7 @@ try {
     LOGO_BASE64 = fs.readFileSync(logoPath).toString('base64')
   }
 } catch (e) {
-  console.warn('[email] Aviso ao ler logotipo do disco:', e)
+  console.warn('[email] Aviso ao ler logotipo:', e)
 }
 
 function required(value: unknown): boolean {
@@ -121,16 +123,19 @@ function buildAgencyNotificationEmail(data: ReturnType<typeof normalizeContactPa
     <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:28px 16px;margin:0;">
       <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.04);">
         
-        <!-- HEADER CLARO COM LOGO -->
-        <div style="background-color:#ffffff;padding:26px 32px 18px 32px;border-bottom:2px solid #e8384a;">
-          <table style="width:100%;border-collapse:collapse;">
+              <!-- HEADER CLARO COM O LOGOTIPO OFICIAL PEQUENO AO LADO DO TÍTULO -->
+        <div style="background-color:#ffffff;padding:20px 32px;border-bottom:2px solid #e8384a;">
+          <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
+              <td style="width:44px;vertical-align:middle;padding-right:14px;">
+                <img src="cid:logo360" alt="Imagem 360" width="38" height="38" style="display:block;width:38px;height:38px;object-fit:contain;border:0;outline:none;" />
+              </td>
               <td style="vertical-align:middle;">
-                <img src="cid:logo360" alt="IMAGEM 360" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;" />
+                <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
+                <h1 style="color:#0f172a;margin:2px 0 0 0;font-size:18px;font-weight:800;line-height:1.2;">Nova Mensagem de Contacto</h1>
               </td>
             </tr>
           </table>
-          <h1 style="color:#0f172a;margin:16px 0 0 0;font-size:20px;font-weight:800;line-height:1.2;">Nova Mensagem de Contacto</h1>
         </div>
 
         <!-- CORPO CLARO -->
@@ -192,16 +197,19 @@ function buildClientConfirmationEmail(data: ReturnType<typeof normalizeContactPa
     <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:28px 16px;margin:0;">
       <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.04);">
         
-        <!-- HEADER CLARO COM LOGO -->
-        <div style="background-color:#ffffff;padding:26px 32px 18px 32px;border-bottom:2px solid #e8384a;">
-          <table style="width:100%;border-collapse:collapse;">
+                <!-- HEADER CLARO COM O LOGOTIPO OFICIAL PEQUENO AO LADO DO TÍTULO -->
+        <div style="background-color:#ffffff;padding:20px 32px;border-bottom:2px solid #e8384a;">
+          <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
+              <td style="width:44px;vertical-align:middle;padding-right:14px;">
+                <img src="cid:logo360" alt="Imagem 360" width="38" height="38" style="display:block;width:38px;height:38px;object-fit:contain;border:0;outline:none;" />
+              </td>
               <td style="vertical-align:middle;">
-                <img src="cid:logo360" alt="IMAGEM 360" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;" />
+                <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
+                <h1 style="color:#0f172a;margin:2px 0 0 0;font-size:18px;font-weight:800;line-height:1.2;">Mensagem Recebida com Sucesso</h1>
               </td>
             </tr>
           </table>
-          <h1 style="color:#0f172a;margin:16px 0 0 0;font-size:20px;font-weight:800;line-height:1.2;">Mensagem Recebida com Sucesso</h1>
         </div>
 
         <!-- CORPO CLARO -->
@@ -250,25 +258,27 @@ export async function sendContactEmail(
   const normalized = normalizeContactPayload(payload)
 
   // Destinatário da agência
-  const to = env.CONTACT_TO_EMAIL || env.QUOTE_TO_EMAIL || env.RESEND_TO_EMAIL || 'nilton.nhanteme@gmail.com'
+  const rawTo = (env.CONTACT_TO_EMAIL || env.QUOTE_TO_EMAIL || env.RESEND_TO_EMAIL || 'nilton.nhanteme@gmail.com').trim()
+  const to = rawTo.includes('@') && rawTo.includes('.') ? rawTo : 'nilton.nhanteme@gmail.com'
   const from = env.RESEND_FROM_EMAIL || 'Imagem 360 <onboarding@resend.dev>'
 
   const { subject, text, html } = buildAgencyNotificationEmail(normalized)
 
   console.info('[resend] Enviando mensagem de contacto para', to, 'com assunto:', subject)
 
-  // Prepara anexo inline com CID para o logotipo oficial da Imagem 360
+  // Prepara o logotipo oficial como anexo inline reconhecido pela Resend
   const attachments = LOGO_BASE64
     ? [
         {
-          filename: 'logo_360.png',
+          filename: 'logo_novo_360.png',
           content: LOGO_BASE64,
           content_type: 'image/png',
-          cid: 'logo360',
+          content_id: 'logo360',
         },
       ]
     : undefined
 
+  // 1. Envio principal para a agência
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -302,7 +312,7 @@ export async function sendContactEmail(
 
   console.info('[resend] Mensagem enviada com sucesso, id:', data.id)
 
-  // Enviar email de confirmação para o visitante (não bloqueante, com o mesmo logo e formato claro)
+  // 2. Enviar email de confirmação para o visitante com o mesmo logotipo inline
   try {
     const confirmation = buildClientConfirmationEmail(normalized)
     await fetch(RESEND_ENDPOINT, {

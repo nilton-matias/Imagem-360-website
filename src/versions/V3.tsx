@@ -1,47 +1,47 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSiteContent } from '../context/ContentContext'
 import { resolveImageSource } from '../utils/imageMap'
-import imgLAM    from '../assets/71b4ddcb-f27b-4cf2-a9cb-03a003079d28.png'
-import imgMAHS   from '../assets/43125cf7-99ea-49eb-9d83-2778192b4e55.png'
-import imgPetro  from '../assets/550ee893-25d8-42d1-a998-66ea9bbe171f.png'
+import imgLAM from '../assets/71b4ddcb-f27b-4cf2-a9cb-03a003079d28.png'
+import imgMAHS from '../assets/43125cf7-99ea-49eb-9d83-2778192b4e55.png'
+import imgPetro from '../assets/550ee893-25d8-42d1-a998-66ea9bbe171f.png'
 import imgAmopao from '../assets/6f2cf065-bac9-4c65-8fa2-601d5c71e34e.png'
-import imgBread  from '../assets/8b484c38-6242-46ac-9cf1-e3e09bcce684.png'
-import imgPBF    from '../assets/7975e11e-f074-453f-9042-417445fbfce3.png'
+import imgBread from '../assets/8b484c38-6242-46ac-9cf1-e3e09bcce684.png'
+import imgPBF from '../assets/7975e11e-f074-453f-9042-417445fbfce3.png'
 import logoImagem360 from '../imports/logo_novo_360.png'
 import imgSolido from '../imports/Microbanco_Solido_-_Fundo_Branco-01.png'
 import imgJogaBets from '../imports/JOGA_BETS_LOGO_-_FINAL.jpg'
 import imgMJD from '../imports/MINISTERIO.jpg'
 
 // ── Paleta ────────────────────────────────────────────────
-const R      = '#e8384a'
+const R = '#e8384a'
 const R_DARK = '#c42d3d'
 
 const L = {
-  bg:       '#ffffff',
-  bgAlt:    '#ffffff',
-  fg:       '#100d0d',
-  fgMid:    '#3a2d2e',
-  fgMuted:  '#8a7a7b',
-  border:   'rgba(0,0,0,0.08)',
-  glass:    'rgba(255,255,255,0.72)',
+  bg: '#ffffff',
+  bgAlt: '#ffffff',
+  fg: '#100d0d',
+  fgMid: '#3a2d2e',
+  fgMuted: '#8a7a7b',
+  border: 'rgba(0,0,0,0.08)',
+  glass: 'rgba(255,255,255,0.72)',
   glassBorder: 'rgba(255,255,255,0.9)',
   navGlass: 'rgba(255,255,255,0.82)',
-  shadow:   '0 8px 40px rgba(0,0,0,0.08)',
-  cardShadow:'0 2px 20px rgba(0,0,0,0.06)',
+  shadow: '0 8px 40px rgba(0,0,0,0.08)',
+  cardShadow: '0 2px 20px rgba(0,0,0,0.06)',
 }
 
 const D = {
-  bg:       '#000000',
-  bgAlt:    '#000000',
-  fg:       '#ede9f0',
-  fgMid:    '#b8afc8',
-  fgMuted:  '#6a6180',
-  border:   'rgba(255,255,255,0.07)',
-  glass:    'rgba(13,11,23,0.75)',
+  bg: '#000000',
+  bgAlt: '#000000',
+  fg: '#ede9f0',
+  fgMid: '#b8afc8',
+  fgMuted: '#6a6180',
+  border: 'rgba(255,255,255,0.07)',
+  glass: 'rgba(13,11,23,0.75)',
   glassBorder: 'rgba(255,255,255,0.09)',
   navGlass: 'rgba(0,0,0,0.88)',
-  shadow:   '0 8px 40px rgba(0,0,0,0.6)',
-  cardShadow:'0 2px 20px rgba(0,0,0,0.45)',
+  shadow: '0 8px 40px rgba(0,0,0,0.6)',
+  cardShadow: '0 2px 20px rgba(0,0,0,0.45)',
 }
 
 // ── Hook: count-up ────────────────────────────────────────
@@ -168,14 +168,49 @@ function MoonIcon({ dark }: { dark: boolean }) {
 
 // ── Componente principal ──────────────────────────────────
 export default function V3() {
-  const [dark, setDark]         = useState(false)
-  const [lang, setLang]         = useState<'pt' | 'en'>('pt')
+  const [dark, setDark] = useState(false)
+  const [lang, setLang] = useState<'pt' | 'en'>('pt')
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeCanal, setActiveCanal] = useState(0)
-  const [form, setForm]         = useState({ name: '', email: '', subject: '', message: '' })
-  const [sent, setSent]         = useState(false)
-  const [focus, setFocus]       = useState<string | null>(null)
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [sent, setSent] = useState(false)
+  const [focus, setFocus] = useState<string | null>(null)
+
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSending(true)
+    setSendError('')
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: form.name,
+          email: form.email,
+          assunto: form.subject || 'Contacto via Website',
+          mensagem: form.message,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao enviar mensagem. Tente novamente.')
+      }
+
+      setSent(true)
+      setForm({ name: '', email: '', subject: '', message: '' })
+    } catch (err: any) {
+      setSendError(err.message || 'Erro ao enviar mensagem.')
+    } finally {
+      setSending(false)
+    }
+  }
 
   const { content, setIsAdminOpen, hasLocalDraft, clearDraft } = useSiteContent()
   const t = dark ? D : L
@@ -193,7 +228,7 @@ export default function V3() {
     { label: copy.nav[5], href: '#contato' },
   ]
   const statsRef = useRef<HTMLDivElement>(null)
-  const statsOn  = useInView(statsRef as React.RefObject<Element>)
+  const statsOn = useInView(statsRef as React.RefObject<Element>)
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40)
@@ -497,7 +532,7 @@ export default function V3() {
                     { icon: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z', label: lang === 'pt' ? '0% de desperdício' : '0% waste' },
                   ].map(item => (
                     <div key={item.label} style={{ padding: '14px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(232,56,74,0.04)', borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(232,56,74,0.10)'}` }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={'color' in item ? item.color : R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={item.icon}/></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={'color' in item ? item.color : R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={item.icon} /></svg>
                       <div style={{ fontSize: '12px', color: t.fgMuted, lineHeight: 1.4, transition: 'color 0.3s' }}>{item.label}</div>
                     </div>
                   ))}
@@ -601,7 +636,7 @@ export default function V3() {
           <div style={{ textAlign: 'center', marginBottom: '52px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '24px', padding: '7px 16px', background: dark ? 'rgba(232,56,74,0.12)' : 'rgba(232,56,74,0.07)', borderRadius: '999px', border: `1px solid ${dark ? 'rgba(232,56,74,0.25)' : 'rgba(232,56,74,0.15)'}` }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={R} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.25em', color: R, fontWeight: 700 }}>{copy.product[0]}</span>
             </div>
@@ -620,7 +655,7 @@ export default function V3() {
               onMouseLeave={e => { e.currentTarget.style.background = R; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 8px 32px ${R}55` }}>
               {copy.product[5]}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+                <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </a>
           </div>
@@ -638,7 +673,7 @@ export default function V3() {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = t.glassBorder; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: dark ? 'rgba(232,56,74,0.15)' : 'rgba(232,56,74,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={f.icon}/>
+                    <path d={f.icon} />
                   </svg>
                 </div>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '14px', color: t.fg, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '-0.01em', transition: 'color 0.3s' }}>
@@ -676,17 +711,17 @@ export default function V3() {
                     onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
                     onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" /><circle cx="12" cy="9" r="2.5" />
                     </svg>
                     {copy.contact[5]}
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                      <path d="M7 17L17 7M17 7H7M17 7v10" />
                     </svg>
                   </a>
                 </div>
               </div>
               {[
-                { l: 'Email',    v: 'team@imagem360.agency',  h: 'mailto:team@imagem360.agency' },
+                { l: 'Email', v: 'team@imagem360.agency', h: 'mailto:team@imagem360.agency' },
                 { l: copy.contact[6], v: '(+258) 834920306', h: 'tel:+258834920306' },
                 { l: copy.contact[6], v: '(+258) 875500828', h: 'tel:+258875500828' },
               ].map((c, i) => (
@@ -706,9 +741,10 @@ export default function V3() {
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '15px', color: t.fg }}>{copy.contact[12]}</p>
               </div>
             ) : (
-              <form onSubmit={e => { e.preventDefault(); setSent(true) }} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              // DEPOIS:
+              <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', color: t.fg, marginBottom: '6px', transition: 'color 0.3s' }}>{copy.contact[7]}</p>
-                {[['name',copy.contact[8],'text'],['email','Email','email'],['subject',copy.contact[9],'text']].map(([f,p,type]) => (
+                {[['name', copy.contact[8], 'text'], ['email', 'Email', 'email'], ['subject', copy.contact[9], 'text']].map(([f, p, type]) => (
                   <input key={f} type={type} placeholder={p} required={f !== 'subject'}
                     value={form[f as keyof typeof form]}
                     onChange={e => setForm({ ...form, [f]: e.target.value })}
@@ -719,11 +755,12 @@ export default function V3() {
                   onChange={e => setForm({ ...form, message: e.target.value })}
                   onFocus={() => setFocus('message')} onBlur={() => setFocus(null)}
                   style={{ ...inp('message'), resize: 'none' }} />
-                <button type="submit" style={{ padding: '13px', background: R, color: '#fff', border: 'none', borderRadius: '12px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.14em', cursor: 'pointer', transition: 'background 0.2s', marginTop: '4px', boxShadow: `0 4px 18px ${R}44` }}
-                  onMouseEnter={e => (e.currentTarget.style.background = R_DARK)}
-                  onMouseLeave={e => (e.currentTarget.style.background = R)}>
-                  {copy.contact[11]}
+                <button type="submit" disabled={sending} style={{ padding: '13px', background: R, color: '#fff', border: 'none', borderRadius: '12px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.14em', cursor: sending ? 'not-allowed' : 'pointer', transition: 'background 0.2s', marginTop: '4px', boxShadow: `0 4px 18px ${R}44`, opacity: sending ? 0.7 : 1 }}>
+                  {sending ? 'A enviar...' : copy.contact[11]}
                 </button>
+                {sendError && (
+                  <p style={{ color: '#ef4444', fontSize: '12px', textAlign: 'center', margin: '4px 0 0' }}>{sendError}</p>
+                )}
               </form>
             )}
           </div>

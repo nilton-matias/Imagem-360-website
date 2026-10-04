@@ -47,31 +47,31 @@ export default function AdminPanel() {
 
   const ui = adminDark
     ? {
-        bg: '#0d0c13',
-        headerBg: '#13111b',
-        sidebarBg: '#100e17',
-        cardBg: '#181622',
-        inputBg: 'rgba(255,255,255,0.06)',
-        border: 'rgba(255,255,255,0.09)',
-        text: '#f3f2f7',
-        textMuted: '#9a94a8',
-        textDim: '#706b80',
-        activeTabBg: 'rgba(232,56,74,0.16)',
-        logoFilter: 'brightness(2) contrast(1.05)',
-      }
+      bg: '#0d0c13',
+      headerBg: '#13111b',
+      sidebarBg: '#100e17',
+      cardBg: '#181622',
+      inputBg: 'rgba(255,255,255,0.06)',
+      border: 'rgba(255,255,255,0.09)',
+      text: '#f3f2f7',
+      textMuted: '#9a94a8',
+      textDim: '#706b80',
+      activeTabBg: 'rgba(232,56,74,0.16)',
+      logoFilter: 'brightness(2) contrast(1.05)',
+    }
     : {
-        bg: '#f8fafc',
-        headerBg: '#ffffff',
-        sidebarBg: '#f1f5f9',
-        cardBg: '#ffffff',
-        inputBg: '#ffffff',
-        border: '#e2e8f0',
-        text: '#0f172a',
-        textMuted: '#64748b',
-        textDim: '#94a3b8',
-        activeTabBg: 'rgba(232,56,74,0.10)',
-        logoFilter: 'none',
-      }
+      bg: '#f8fafc',
+      headerBg: '#ffffff',
+      sidebarBg: '#f1f5f9',
+      cardBg: '#ffffff',
+      inputBg: '#ffffff',
+      border: '#e2e8f0',
+      text: '#0f172a',
+      textMuted: '#64748b',
+      textDim: '#94a3b8',
+      activeTabBg: 'rgba(232,56,74,0.10)',
+      logoFilter: 'none',
+    }
 
   if (!isAuthenticated) {
     const handleLogin = (e: React.FormEvent) => {
@@ -136,7 +136,7 @@ export default function AdminPanel() {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ width: '100%', maxWidth: '1080px', height: '90vh', background: ui.bg, border: `1px solid ${ui.border}`, borderRadius: '24px', boxShadow: '0 30px 80px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', overflow: 'hidden', color: ui.text }}>
-        
+
         {/* Header */}
         <div style={{ padding: '16px 24px', background: ui.headerBg, borderBottom: `1px solid ${ui.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -279,40 +279,83 @@ export default function AdminPanel() {
                   ))}
                 </div>
 
-                <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Adicionar Nova Marca</h4>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <input
-                      type="text"
-                      placeholder="Nome da Marca"
-                      value={newBrand.name}
-                      onChange={e => setNewBrand({ ...newBrand, name: e.target.value })}
-                      style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
-                    />
-                    <select
-                      value={newBrand.img}
-                      onChange={e => setNewBrand({ ...newBrand, img: e.target.value })}
-                      style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
-                    >
-                      <option value="">Selecione uma imagem...</option>
-                      {BRAND_IMAGE_OPTIONS.map(opt => (
-                        <option key={opt.key} value={opt.key}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => {
-                        if (newBrand.name && newBrand.img) {
-                          updateContent({
-                            ...content,
-                            clients: [...content.clients, { id: 'client-' + Date.now(), ...newBrand }],
-                          })
-                          setNewBrand({ name: '', img: '' })
-                        }
-                      }}
-                      style={{ padding: '10px 20px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      Adicionar
-                    </button>
+                <div style={{ padding: '20px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px' }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '14px' }}>Adicionar Nova Marca</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        placeholder="Nome da Marca (ex: Nova Empresa)"
+                        value={newBrand.name}
+                        onChange={e => setNewBrand({ ...newBrand, name: e.target.value })}
+                        style={{ flex: 1, padding: '10px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      />
+
+                      {/* Botão para carregar imagem do computador */}
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: ui.inputBg, border: `1px dashed ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
+                        📁 Carregar Logotipo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={e => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onload = ev => {
+                                setNewBrand(b => ({ ...b, img: ev.target?.result as string }))
+                              }
+                              reader.readAsDataURL(file)
+                            }
+                          }}
+                        />
+                      </label>
+
+                      {/* Ou selecionar dos existentes */}
+                      <select
+                        value={newBrand.img.startsWith('data:') ? '' : newBrand.img}
+                        onChange={e => setNewBrand({ ...newBrand, img: e.target.value })}
+                        style={{ width: '180px', padding: '10px 14px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      >
+                        <option value="">Ou escolher existente...</option>
+                        {BRAND_IMAGE_OPTIONS.map(opt => (
+                          <option key={opt.key} value={opt.key}>{opt.label}</option>
+                        ))}
+                      </select>
+
+                      <button
+                        onClick={() => {
+                          if (newBrand.name && newBrand.img) {
+                            updateContent({
+                              ...content,
+                              clients: [...content.clients, { id: 'client-' + Date.now(), ...newBrand }],
+                            })
+                            setNewBrand({ name: '', img: '' })
+                          }
+                        }}
+                        disabled={!newBrand.name || !newBrand.img}
+                        style={{ padding: '10px 22px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '999px', fontSize: '13px', fontWeight: 700, cursor: (!newBrand.name || !newBrand.img) ? 'not-allowed' : 'pointer', opacity: (!newBrand.name || !newBrand.img) ? 0.6 : 1 }}
+                      >
+                        + Adicionar
+                      </button>
+                    </div>
+
+                    {/* Pré-visualização da imagem carregada */}
+                    {newBrand.img && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: ui.inputBg, borderRadius: '10px', width: 'fit-content' }}>
+                        <span style={{ fontSize: '12px', color: ui.textMuted }}>Prévia do logotipo:</span>
+                        <div style={{ height: '36px', padding: '4px 10px', background: '#ffffff', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img src={resolveImageSource(newBrand.img)} alt="Prévia" style={{ maxHeight: '28px', maxWidth: '100px', objectFit: 'contain' }} />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setNewBrand({ ...newBrand, img: '' })}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                          ✕ Remover
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

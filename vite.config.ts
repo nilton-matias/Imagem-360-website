@@ -4,9 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 import fs from 'node:fs'
 
-import siteConfiguration from './.figma/make/site.json'
-import { handleContactApi } from './server/contactEmail'
-import publishHandler from './api/publish'
+import siteConfiguration from './.figma/make/site.json' with { type: 'json' }
+import { handleContactApi } from './server/contactEmail.ts'
+import publishHandler from './api/publish.ts'
 
 
 // Vite config — https://vitejs.dev/config/
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
+        '@': path.resolve(import.meta.dirname, './src'),
       },
     },
     server: {
@@ -447,7 +447,7 @@ function apiDevServer(env: Record<string, string>): Plugin {
             // Persistência física imediata no arquivo JSON do projeto (desenvolvimento)
             if (body?.content) {
               try {
-                const targetPath = path.resolve(__dirname, 'src/data/site-content.json')
+                 const targetPath = path.resolve(import.meta.dirname, 'src/data/site-content.json')
                 fs.writeFileSync(targetPath, JSON.stringify(body.content, null, 2), 'utf8')
                 console.log('✅ Conteúdo salvo com sucesso no arquivo local:', targetPath)
               } catch (fsErr) {
