@@ -162,6 +162,7 @@ async function handleContact(req, res, body) {
     try {
       const fromName = process.env.SMTP_FROM_NAME || 'Imagem 360'
       const fromUser = process.env.SMTP_USER
+      // 1.1 Enviar notificação principal para a Agência
       await sendSmtpMail({
         from: `"${fromName}" <${fromUser}>`,
         to,
@@ -170,6 +171,61 @@ async function handleContact(req, res, body) {
         text: textBody,
         html: htmlBody,
       })
+
+      // 1.2 Enviar email de confirmação / feedback para o visitante
+      try {
+        const clientSubject = `IMAGEM 360 - Mensagem Recebida com Sucesso`
+        const clientText = `Olá ${nome},\n\nAgradecemos o seu contacto através da Imagem 360. A nossa equipa já recebeu a sua mensagem e entrará em contacto consigo com a maior brevidade possível.\n\nAssunto: ${assunto}\n\nCom os melhores cumprimentos,\nEquipa Imagem 360\nAv. Maguiguana, 845, Maputo, Moçambique • team@imagem360.agency`
+        const clientHtml = `
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:24px 16px;margin:0;">
+            <div style="max-width:580px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
+              <div style="background-color:#ffffff;padding:20px 28px;border-bottom:2px solid #e8384a;">
+                <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="width:48px;vertical-align:middle;padding-right:14px;">
+                      <img src="${LOGO_URL}" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
+                      <h1 style="color:#0f172a;margin:2px 0 0 0;font-size:18px;font-weight:800;line-height:1.2;">Mensagem Recebida com Sucesso</h1>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div style="padding:28px;color:#334155;font-size:14px;line-height:1.6;">
+                <p style="margin-top:0;">Olá <strong>${nome}</strong>,</p>
+                <p>Agradecemos o seu contacto através da <strong>Imagem 360</strong>. A nossa equipa já recebeu a sua mensagem e entrará em contacto consigo com a maior brevidade possível.</p>
+                <div style="padding:16px;background-color:#f8fafc;border-radius:8px;border:1px solid #edf2f7;margin:20px 0;">
+                  <p style="margin:0 0 6px;"><strong>Assunto:</strong> ${assunto}</p>
+                  <p style="margin:0;"><strong>O seu email:</strong> ${email}</p>
+                </div>
+                <p style="margin-bottom:0;color:#64748b;margin-top:24px;">
+                  Com os melhores cumprimentos,<br>
+                  <strong style="color:#0f172a;">Equipa Imagem 360</strong><br>
+                  <span style="font-size:12px;color:#94a3b8;">Av. Maguiguana, 845, Maputo, Moçambique • team@imagem360.agency</span>
+                </p>
+              </div>
+              <div style="padding:14px 28px;background-color:#fafafa;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center;">
+                © Imagem 360, Lda • Agência de Marketing e Publicidade
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+
+        await sendSmtpMail({
+          from: `"${fromName}" <${fromUser}>`,
+          to: email,
+          replyTo: to,
+          subject: clientSubject,
+          text: clientText,
+          html: clientHtml,
+        })
+      } catch (feedbackErr) {
+        console.warn('[smtp] Aviso ao enviar confirmação ao cliente:', feedbackErr.message)
+      }
 
       res.writeHead(200, { 'Content-Type': 'application/json' })
       return res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
