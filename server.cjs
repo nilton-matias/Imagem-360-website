@@ -1,6 +1,7 @@
 const http = require('http')
 const fs = require('fs')
 const path = require('path')
+const nodemailer = require('nodemailer')
 
 // Carrega variáveis do arquivo .env manualmente para não depender de pacotes externos
 function loadEnv() {
@@ -58,14 +59,25 @@ function setCors(res) {
 
 const LOGO_URL = process.env.EMAIL_LOGO_URL || 'https://media.githubusercontent.com/media/nilton-matias/Imagem-360-website/main/public/logo_360.png'
 
-// Handler de envio de email via Resend
-async function handleContact(req, res, body) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    res.writeHead(500, { 'Content-Type': 'application/json' })
-    return res.end(JSON.stringify({ error: 'RESEND_API_KEY não configurada no arquivo .env.' }))
+// Helper para inicializar transporter do Nodemailer (SMTP Google Workspace / Gmail)
+function getMailer() {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const port = parseInt(process.env.SMTP_PORT || '465', 10)
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port,
+      secure: port === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
   }
+  return null
+}
 
+// Handler de envio de email (Nodemailer SMTP com fallback para Resend)
+async function handleContact(req, res, body) {
   const nome = (body?.nome || body?.name || '').trim()
   const email = (body?.email || '').trim().toLowerCase()
   const assunto = (body?.assunto || body?.subject || 'Contacto via Website').trim()
@@ -85,9 +97,8 @@ async function handleContact(req, res, body) {
     return res.end(JSON.stringify({ error: 'Por favor, escreva a sua mensagem.' }))
   }
 
-  const rawTo = (process.env.CONTACT_TO_EMAIL || 'nilton.nhanteme@gmail.com').trim()
+  const rawTo = (process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER || 'nilton.nhanteme@gmail.com').trim()
   const to = rawTo.includes('@') && rawTo.includes('.') ? rawTo : 'nilton.nhanteme@gmail.com'
-  const from = process.env.RESEND_FROM_EMAIL || 'Imagem 360 <onboarding@resend.dev>'
 
   const emailSubject = `IMAGEM 360 - ${assunto}`
   const htmlBody = `
@@ -125,38 +136,71 @@ async function handleContact(req, res, body) {
     </body>
     </html>
   `
+  const textBody = `Nome: ${nome}\nEmail: ${email}\n${telefone ? `Telefone: ${telefone}\n` : ''}Assunto: ${assunto}\n\nMensagem:\n${mensagem}`
 
-  try {
-    const resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        reply_to: email,
+  // 1. Envio prioritário via Nodemailer SMTP (Google Workspace / Gmail)
+  const transporter = getMailer()
+  if (transporter) {
+    try {
+      const fromName = process.env.SMTP_FROM_NAME || 'Imagem 360 Website'
+      const fromUser = process.env.SMTP_USER
+      await transporter.sendMail({
+        from: `"${fromName}" <${fromUser}>`,
+        to,
+        replyTo: email,
         subject: emailSubject,
-        text: `Nome: ${nome}\nEmail: ${email}\nAssunto: ${assunto}\n\nMensagem:\n${mensagem}`,
+        text: textBody,
         html: htmlBody,
-      }),
-    })
+      })
 
-    const resendData = await resendRes.json().catch(() => ({}))
-
-    if (!resendRes.ok) {
-      res.writeHead(resendRes.status, { 'Content-Type': 'application/json' })
-      return res.end(JSON.stringify({ error: resendData.message || 'Falha ao enviar email pelo serviço Resend.' }))
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
+    } catch (err) {
+      console.error('Erro Nodemailer SMTP:', err)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({ error: 'Erro ao enviar email pelo servidor SMTP: ' + (err.message || '') }))
     }
-
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
-  } catch (err) {
-    console.error('Erro Resend:', err)
-    res.writeHead(500, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'Erro de comunicação ao enviar email.' }))
   }
+
+  // 2. Fallback via Resend se RESEND_API_KEY estiver configurada
+  const apiKey = process.env.RESEND_API_KEY
+  if (apiKey) {
+    try {
+      const from = process.env.RESEND_FROM_EMAIL || 'Imagem 360 <onboarding@resend.dev>'
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to: [to],
+          reply_to: email,
+          subject: emailSubject,
+          text: textBody,
+          html: htmlBody,
+        }),
+      })
+
+      const resendData = await resendRes.json().catch(() => ({}))
+
+      if (!resendRes.ok) {
+        res.writeHead(resendRes.status, { 'Content-Type': 'application/json' })
+        return res.end(JSON.stringify({ error: resendData.message || 'Falha ao enviar email pelo serviço Resend.' }))
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
+    } catch (err) {
+      console.error('Erro Resend:', err)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({ error: 'Erro de comunicação ao enviar email.' }))
+    }
+  }
+
+  res.writeHead(500, { 'Content-Type': 'application/json' })
+  return res.end(JSON.stringify({ error: 'Nenhum serviço de envio de email configurado (configure SMTP ou Resend no .env).' }))
 }
 
 // Handler para salvar conteúdo do painel administrativo
@@ -228,10 +272,15 @@ const server = http.createServer((req, res) => {
   // ROTA: /api/contact
   if (url === '/api/contact') {
     if (req.method === 'GET') {
+      const isSmtpConfigured = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS)
+      const isResendConfigured = Boolean(process.env.RESEND_API_KEY)
       res.writeHead(200, { 'Content-Type': 'application/json' })
       return res.end(JSON.stringify({
-        configured: Boolean(process.env.RESEND_API_KEY),
-        service: 'Resend Contact API (AWS Production)',
+        configured: isSmtpConfigured || isResendConfigured,
+        service: isSmtpConfigured
+          ? `Nodemailer SMTP (${process.env.SMTP_USER})`
+          : (isResendConfigured ? 'Resend Contact API' : 'Não configurado'),
+        destination: process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER || 'nilton.nhanteme@gmail.com',
       }))
     }
 
