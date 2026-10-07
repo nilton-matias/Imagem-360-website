@@ -263,6 +263,24 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // ROTA: /api/content
+  if (url === '/api/content') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    try {
+      if (fs.existsSync(SITE_CONTENT_PATH)) {
+        const fileData = fs.readFileSync(SITE_CONTENT_PATH, 'utf8')
+        return res.end(JSON.stringify({ success: true, content: JSON.parse(fileData) }))
+      }
+    } catch {}
+    return res.end(JSON.stringify({ success: true }))
+  }
+
+  // ROTA: /api/auth/login e /api/auth/me
+  if (url.startsWith('/api/auth')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ success: true, authenticated: true }))
+  }
+
   // Se não for rota de API, serve os arquivos estáticos compilados do React
   serveStaticFile(req.url, res)
 })
