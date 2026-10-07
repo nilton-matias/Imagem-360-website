@@ -177,7 +177,7 @@ export default function V3() {
   const [sent, setSent] = useState(false)
   const [focus, setFocus] = useState<string | null>(null)
 
-  const { content, setIsAdminOpen, hasLocalDraft, clearDraft } = useSiteContent()
+  const { content, setIsAdminOpen } = useSiteContent()
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
@@ -254,14 +254,6 @@ export default function V3() {
 
   return (
     <div style={{ background: t.bg, color: t.fg, fontFamily: 'var(--font-body)', minHeight: '100vh', transition: 'background 0.3s, color 0.3s' }}>
-
-      {hasLocalDraft && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#f59e0b', color: '#000', padding: '6px 20px', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-          <span>⚠️ Rascunho local pendente (ainda não publicado no GitHub).</span>
-          <button onClick={() => setIsAdminOpen(true)} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '999px', padding: '3px 12px', fontSize: '11px', cursor: 'pointer', fontWeight: 700 }}>Abrir Painel Admin</button>
-          <button onClick={clearDraft} style={{ background: 'transparent', color: '#000', border: '1px solid rgba(0,0,0,0.4)', borderRadius: '999px', padding: '3px 10px', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}>Descartar rascunho</button>
-        </div>
-      )}
 
       {/* ── NAV ──────────────────────────────────────────── */}
       <header style={{
