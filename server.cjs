@@ -56,20 +56,7 @@ function setCors(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 }
 
-let LOGO_BASE64 = ''
-try {
-  const logoP = path.resolve(__dirname, 'public/logo_360.png')
-  if (fs.existsSync(logoP)) {
-    LOGO_BASE64 = fs.readFileSync(logoP).toString('base64')
-  } else {
-    const fallbackP = path.resolve(__dirname, 'src/imports/logo_novo_360.png')
-    if (fs.existsSync(fallbackP)) {
-      LOGO_BASE64 = fs.readFileSync(fallbackP).toString('base64')
-    }
-  }
-} catch (e) {
-  console.warn('Aviso ao carregar logo para email:', e)
-}
+const LOGO_URL = process.env.EMAIL_LOGO_URL || 'https://media.githubusercontent.com/media/nilton-matias/Imagem-360-website/main/public/logo_360.png'
 
 // Handler de envio de email via Resend
 async function handleContact(req, res, body) {
@@ -112,7 +99,7 @@ async function handleContact(req, res, body) {
           <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td style="width:48px;vertical-align:middle;padding-right:14px;">
-                <img src="cid:logo360" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
+                <img src="${LOGO_URL}" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
               </td>
               <td style="vertical-align:middle;">
                 <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
@@ -139,17 +126,6 @@ async function handleContact(req, res, body) {
     </html>
   `
 
-  const attachments = LOGO_BASE64
-    ? [
-        {
-          filename: 'logo_360.png',
-          content: LOGO_BASE64,
-          content_type: 'image/png',
-          content_id: 'logo360',
-        },
-      ]
-    : undefined
-
   try {
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -164,7 +140,6 @@ async function handleContact(req, res, body) {
         subject: emailSubject,
         text: `Nome: ${nome}\nEmail: ${email}\nAssunto: ${assunto}\n\nMensagem:\n${mensagem}`,
         html: htmlBody,
-        ...(attachments ? { attachments } : {}),
       }),
     })
 
