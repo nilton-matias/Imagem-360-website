@@ -67,7 +67,6 @@ export const ContentProvider: React.FC<{
     }
   })
 
-  // Abre se a URL contiver #admin ou /admin no carregamento
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return (
@@ -77,6 +76,27 @@ export const ContentProvider: React.FC<{
     }
     return false
   })
+
+  // Sincroniza conteúdo publicado do servidor AWS
+  useEffect(() => {
+    let cancelled = false
+    async function loadServerContent() {
+      try {
+        const response = await fetch('/api/content', {
+          cache: 'no-store',
+        })
+        if (!response.ok) return
+        const data = await response.json()
+        if (!cancelled && data?.content) {
+          setContent(data.content)
+        }
+      } catch {}
+    }
+    loadServerContent()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Sincroniza abertura via URL (hash ou rota /admin)
   useEffect(() => {

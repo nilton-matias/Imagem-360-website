@@ -255,20 +255,26 @@ export default function AdminPanel() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px', marginBottom: '28px' }}>
                   {content.clients.map((c, i) => (
-                    <div key={i} style={{ padding: '14px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '60px', height: '40px', background: '#fff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
-                        <img src={resolveImageSource(c.img)} alt={c.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    <div key={i} style={{ padding: '14px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                      <div style={{ width: '60px', height: '40px', minWidth: '60px', flexShrink: 0, background: '#fff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+                        {c.img ? (
+                          <img src={resolveImageSource(c.img)} alt={c.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <span style={{ fontSize: '10px', color: '#999', fontWeight: 700 }}>Sem logo</span>
+                        )}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 700 }}>{c.name}</div>
-                        <div style={{ fontSize: '11px', color: ui.textDim }}>{c.img}</div>
+                      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                        <div style={{ fontSize: '11px', color: ui.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {c.img?.startsWith('data:') ? '📷 Logotipo carregado' : (c.img || 'Sem logotipo')}
+                        </div>
                       </div>
                       <button
                         onClick={() => {
                           const updated = content.clients.filter((_, idx) => idx !== i)
                           updateContent({ ...content, clients: updated })
                         }}
-                        style={{ padding: '6px 10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}
+                        style={{ padding: '6px 10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}
                       >
                         Remover
                       </button>
