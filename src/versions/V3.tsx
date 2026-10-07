@@ -392,39 +392,35 @@ export default function V3() {
           {/* Sistema visual: marca, utilizador, comunicação e marketing */}
           <div className="hero-visual-flow">
             <div className="hero-outer-ring" style={{ border: `1px solid ${dark ? 'rgba(232,56,74,0.35)' : 'rgba(232,56,74,0.22)'}`, boxShadow: `0 0 80px ${dark ? 'rgba(232,56,74,0.12)' : 'rgba(232,56,74,0.08)'}` }} />
-            <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, overflow: 'visible' }}>
+            <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2, overflow: 'visible' }}>
               <defs>
-                <marker id="flow-arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill={R} />
+                <marker id="flow-arrow-end" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill={R} />
                 </marker>
               </defs>
               {[
-                { d: 'M250 150 C250 120 250 95 250 62', delay: '0s' },
-                { d: 'M185 305 C155 340 120 375 88 412', delay: '0.7s' },
-                { d: 'M315 305 C345 340 380 375 412 412', delay: '1.4s' },
+                { d: 'M250 170 C250 135 250 100 250 72', delay: '0s' },
+                { d: 'M185 300 C160 340 140 375 122 418', delay: '0.7s' },
+                { d: 'M315 300 C340 340 360 375 378 418', delay: '1.4s' },
               ].map(flow => (
                 <g key={flow.d}>
-                  <path d={flow.d} fill="none" stroke={R} strokeWidth="9" strokeOpacity={dark ? 0.08 : 0.06} />
-                  <path d={flow.d} fill="none" stroke={R} strokeWidth="2" strokeOpacity={dark ? 0.86 : 0.68} markerEnd="url(#flow-arrow-end)" />
-                  <circle className="signal-flow-dot" r="4" fill={R}>
-                    <animateMotion dur="2.4s" begin={flow.delay} repeatCount="indefinite" path={flow.d} />
-                  </circle>
-                  <circle className="signal-flow-dot" r="3" fill={R} fillOpacity="0.58">
-                    <animateMotion dur="2.4s" begin={flow.delay} repeatCount="indefinite" path={flow.d} keyPoints="1;0" keyTimes="0;1" calcMode="linear" />
+                  <path d={flow.d} fill="none" stroke={R} strokeWidth="2.5" strokeOpacity={dark ? 0.9 : 0.75} markerEnd="url(#flow-arrow-end)" />
+                  <circle className="signal-flow-dot" r="4.5" fill={R}>
+                    <animateMotion dur="2.2s" begin={flow.delay} repeatCount="indefinite" path={flow.d} />
                   </circle>
                 </g>
               ))}
-              {[[250, 150], [185, 305], [315, 305]].map(([cx, cy]) => (
+              {[[250, 170], [185, 300], [315, 300]].map(([cx, cy]) => (
                 <g key={`${cx}-${cy}`}>
-                  <circle cx={cx} cy={cy} r="7" fill={dark ? '#000000' : '#ffffff'} stroke={R} strokeWidth="1.5" />
-                  <circle cx={cx} cy={cy} r="3" fill={R} />
+                  <circle cx={cx} cy={cy} r="6" fill={dark ? '#0f172a' : '#ffffff'} stroke={R} strokeWidth="2" />
+                  <circle cx={cx} cy={cy} r="2.5" fill={R} />
                 </g>
               ))}
             </svg>
-            <div className="hero-center-circle" style={{ background: t.glass, border: `1px solid ${dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)'}`, boxShadow: dark ? '0 24px 70px rgba(0,0,0,0.65)' : '0 24px 70px rgba(0,0,0,0.13)' }}>
+            <div className="hero-center-circle" style={{ background: dark ? '#0f172a' : '#ffffff', border: `2px solid ${dark ? 'rgba(232,56,74,0.35)' : 'rgba(232,56,74,0.2)'}`, boxShadow: dark ? '0 24px 70px rgba(0,0,0,0.85)' : '0 24px 70px rgba(0,0,0,0.12)', zIndex: 5 }}>
               <img src={logoImagem360 || '/logo_360.png'} alt="Imagem 360" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: dark ? 'brightness(1.8) contrast(0.9)' : 'none', transition: 'filter 0.3s' }} />
             </div>
-            <div className="hero-float-badge" style={{ top: '0%', left: '50%', transform: 'translateX(-50%)', background: dark ? 'rgba(15,15,15,0.92)' : 'rgba(255,255,255,0.96)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow }}>
+            <div className="hero-float-badge" style={{ top: '5%', left: '50%', transform: 'translateX(-50%)', background: dark ? 'rgba(15,15,15,0.95)' : 'rgba(255,255,255,0.98)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, zIndex: 6 }}>
               <span className="hero-float-icon" style={{ background: R, boxShadow: `0 0 0 5px ${R}22` }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="8" r="4" />
@@ -434,10 +430,10 @@ export default function V3() {
               <span className="hero-float-label" style={{ color: t.fg }}>{copy.hero[4] || (lang === 'pt' ? 'Utilizador' : 'User')}</span>
             </div>
             {[
-              { label: copy.hero[5] || (lang === 'pt' ? 'Comunicação' : 'Communication'), type: 'communication', bottom: '1%', right: '1%' },
-              { label: copy.hero[6] || 'Marketing', type: 'marketing', bottom: '1%', left: '1%' },
+              { label: copy.hero[5] || (lang === 'pt' ? 'Comunicação' : 'Communication'), type: 'communication', bottom: '6%', right: '3%' },
+              { label: copy.hero[6] || 'Marketing', type: 'marketing', bottom: '6%', left: '3%' },
             ].map(item => (
-              <div key={item.label} className="hero-float-badge" style={{ right: item.right, bottom: item.bottom, left: item.left, background: dark ? 'rgba(15,15,15,0.92)' : 'rgba(255,255,255,0.96)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow }}>
+              <div key={item.label} className="hero-float-badge" style={{ right: item.right, bottom: item.bottom, left: item.left, background: dark ? 'rgba(15,15,15,0.95)' : 'rgba(255,255,255,0.98)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, zIndex: 6 }}>
                 <span className="hero-float-icon" style={{ background: R, boxShadow: `0 0 0 5px ${R}22` }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     {item.type === 'marketing' ? (
