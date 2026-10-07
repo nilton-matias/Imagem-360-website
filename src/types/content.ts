@@ -46,6 +46,7 @@ export interface ContactInfo {
   addressPt: string
   addressEn: string
   mapsUrl: string
+  web3formsKey?: string
 }
 
 export interface SiteCopy {

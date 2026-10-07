@@ -177,6 +177,7 @@ export default function V3() {
   const [sent, setSent] = useState(false)
   const [focus, setFocus] = useState<string | null>(null)
 
+  const { content, setIsAdminOpen, hasLocalDraft, clearDraft } = useSiteContent()
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
@@ -186,8 +187,9 @@ export default function V3() {
     setSendError('')
 
     try {
+      const accessKey = content?.contactInfo?.web3formsKey?.trim() || 'c973c589-8d58-49e8-aeb2-ef76ce928ed2'
       const formData = new FormData()
-      formData.append('access_key', 'c973c589-8d58-49e8-aeb2-ef76ce928ed2')
+      formData.append('access_key', accessKey)
       formData.append('name', form.name)
       formData.append('email', form.email)
       formData.append('subject', form.subject || 'Contacto via Website')
@@ -213,8 +215,6 @@ export default function V3() {
       setSending(false)
     }
   }
-
-  const { content, setIsAdminOpen, hasLocalDraft, clearDraft } = useSiteContent()
   const t = dark ? D : L
   const copy = content.copy[lang] || COPY[lang]
   const canais = copy.channels || (lang === 'pt' ? CANAIS_PT : CANAIS_EN)

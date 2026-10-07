@@ -1608,6 +1608,26 @@ export default function AdminPanel() {
                             style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
                           />
                         </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>
+                            Chave Web3Forms (Access Key) — Email de Destino do Formulário
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="ex: c973c589-8d58-49e8-aeb2-ef76ce928ed2"
+                            value={content.contactInfo?.web3formsKey || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              if (!updated.contactInfo) updated.contactInfo = {} as any
+                              updated.contactInfo.web3formsKey = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', fontFamily: 'monospace' }}
+                          />
+                          <p style={{ fontSize: '11px', color: ui.textDim, margin: '4px 0 0' }}>
+                            💡 Para receber em outro email (ex: no Gmail para testes ou team@imagem360.agency para produção), basta colar a Access Key correspondente gerada no web3forms.com.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
