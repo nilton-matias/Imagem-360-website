@@ -217,7 +217,9 @@ export default function AdminPanel() {
     labelEn: '',
   })
   const [textLang, setTextLang] = useState<'pt' | 'en'>('pt')
-  const [textSection, setTextSection] = useState<'hero' | 'servicos' | 'eco' | 'sobre' | 'produto' | 'contato' | 'geral'>('hero')
+  const [textSection, setTextSection] = useState<'hero' | 'servicos' | 'eco' | 'impacto' | 'sobre' | 'marcas' | 'produto' | 'contato' | 'geral'>('hero')
+  const [brandTextLang, setBrandTextLang] = useState<'pt' | 'en'>('pt')
+  const [statTextLang, setStatTextLang] = useState<'pt' | 'en'>('pt')
 
   if (!isAdminOpen) return null
 
@@ -425,7 +427,83 @@ export default function AdminPanel() {
             {activeTab === 'marcas' && (
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Marcas que confiam em nós</h3>
-                <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Gerencie as marcas que aparecem no carrossel de clientes.</p>
+                <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Gerencie as marcas que aparecem no carrossel de clientes e edite os textos desta seção.</p>
+
+                {/* Edição de Título e Descrição da Seção */}
+                <div style={{ padding: '20px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, margin: 0 }}>Textos da Seção de Marcas</h4>
+                      <p style={{ fontSize: '12px', color: ui.textMuted, margin: '2px 0 0' }}>Título e descrição que aparecem acima dos logotipos dos clientes.</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        onClick={() => setBrandTextLang('pt')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: brandTextLang === 'pt' ? '#e8384a' : (adminDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0'),
+                          color: brandTextLang === 'pt' ? '#fff' : ui.text,
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🇵🇹 Português
+                      </button>
+                      <button
+                        onClick={() => setBrandTextLang('en')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: brandTextLang === 'en' ? '#e8384a' : (adminDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0'),
+                          color: brandTextLang === 'en' ? '#fff' : ui.text,
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🇬🇧 English
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>
+                        Tag / Título da Seção ({brandTextLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={content.copy[brandTextLang]?.brands?.[0] || ''}
+                        onChange={e => {
+                          const updated = { ...content }
+                          if (!updated.copy[brandTextLang].brands) updated.copy[brandTextLang].brands = ['', '']
+                          updated.copy[brandTextLang].brands[0] = e.target.value
+                          updateContent(updated)
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>
+                        Subtítulo / Descrição da Seção ({brandTextLang.toUpperCase()})
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={content.copy[brandTextLang]?.brands?.[1] || ''}
+                        onChange={e => {
+                          const updated = { ...content }
+                          if (!updated.copy[brandTextLang].brands) updated.copy[brandTextLang].brands = ['', '']
+                          updated.copy[brandTextLang].brands[1] = e.target.value
+                          updateContent(updated)
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', resize: 'vertical' }}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px', marginBottom: '28px' }}>
                   {content.clients.map((c, i) => (
@@ -541,7 +619,100 @@ export default function AdminPanel() {
             {activeTab === 'numeros' && (
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Números que comprovam</h3>
-                <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Altere os dados de estatística de impacto exibidos no site.</p>
+                <p style={{ fontSize: '13px', color: ui.textMuted, marginBottom: '20px' }}>Altere os dados de estatística de impacto e edite os textos desta seção.</p>
+
+                {/* Edição de Título e Subtítulo de Impacto */}
+                <div style={{ padding: '20px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '16px', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, margin: 0 }}>Textos da Seção de Impacto</h4>
+                      <p style={{ fontSize: '12px', color: ui.textMuted, margin: '2px 0 0' }}>Tag superior e chamada que introduzem as métricas de impacto.</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        onClick={() => setStatTextLang('pt')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: statTextLang === 'pt' ? '#e8384a' : (adminDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0'),
+                          color: statTextLang === 'pt' ? '#fff' : ui.text,
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🇵🇹 Português
+                      </button>
+                      <button
+                        onClick={() => setStatTextLang('en')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: statTextLang === 'en' ? '#e8384a' : (adminDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0'),
+                          color: statTextLang === 'en' ? '#fff' : ui.text,
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🇬🇧 English
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>
+                        Tag Superior ({statTextLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={content.copy[statTextLang]?.impact?.[0] || ''}
+                        onChange={e => {
+                          const updated = { ...content }
+                          if (!updated.copy[statTextLang].impact) updated.copy[statTextLang].impact = ['', '', '']
+                          updated.copy[statTextLang].impact[0] = e.target.value
+                          updateContent(updated)
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>
+                        Título Linha 1 ({statTextLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={content.copy[statTextLang]?.impact?.[1] || ''}
+                        onChange={e => {
+                          const updated = { ...content }
+                          if (!updated.copy[statTextLang].impact) updated.copy[statTextLang].impact = ['', '', '']
+                          updated.copy[statTextLang].impact[1] = e.target.value
+                          updateContent(updated)
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>
+                        Título Linha 2 - Destaque ({statTextLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={content.copy[statTextLang]?.impact?.[2] || ''}
+                        onChange={e => {
+                          const updated = { ...content }
+                          if (!updated.copy[statTextLang].impact) updated.copy[statTextLang].impact = ['', '', '']
+                          updated.copy[statTextLang].impact[2] = e.target.value
+                          updateContent(updated)
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
                   {content.stats.map((s, i) => (
                     <div key={i} style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
@@ -667,10 +838,12 @@ export default function AdminPanel() {
                     { id: 'hero', label: '1. Hero & Cabeçalho' },
                     { id: 'servicos', label: '2. Serviços & Canais' },
                     { id: 'eco', label: '3. Mídia Ecológica' },
-                    { id: 'sobre', label: '4. Quem Somos' },
-                    { id: 'produto', label: '5. 360-Message' },
-                    { id: 'contato', label: '6. Contato & Morada' },
-                    { id: 'geral', label: '7. Menu & Rodapé' },
+                    { id: 'impacto', label: '4. Impacto & Números' },
+                    { id: 'sobre', label: '5. Quem Somos' },
+                    { id: 'marcas', label: '6. Marcas & Clientes' },
+                    { id: 'produto', label: '7. 360-Message' },
+                    { id: 'contato', label: '8. Contato & Morada' },
+                    { id: 'geral', label: '9. Menu & Rodapé' },
                   ].map(sec => (
                     <button
                       key={sec.id}
@@ -1017,12 +1190,78 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* SEÇÃO 4: QUEM SOMOS */}
+                {/* SEÇÃO 4: IMPACTO & NÚMEROS */}
+                {textSection === 'impacto' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Título e Subtítulo da Seção de Impacto</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Tag Superior</label>
+                          <input
+                            type="text"
+                            value={content.copy[textLang]?.impact?.[0] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              if (!updated.copy[textLang].impact) updated.copy[textLang].impact = ['', '', '']
+                              updated.copy[textLang].impact[0] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Título Linha 1</label>
+                          <input
+                            type="text"
+                            value={content.copy[textLang]?.impact?.[1] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              if (!updated.copy[textLang].impact) updated.copy[textLang].impact = ['', '', '']
+                              updated.copy[textLang].impact[1] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Título Linha 2 (Destaque)</label>
+                          <input
+                            type="text"
+                            value={content.copy[textLang]?.impact?.[2] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              if (!updated.copy[textLang].impact) updated.copy[textLang].impact = ['', '', '']
+                              updated.copy[textLang].impact[2] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SEÇÃO 5: QUEM SOMOS */}
                 {textSection === 'sobre' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
                       <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Apresentação Institucional</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Tag Superior (ex: Quem Somos / About us)</label>
+                          <input
+                            type="text"
+                            value={content.copy[textLang].about[0] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              updated.copy[textLang].about[0] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          />
+                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                           <div>
                             <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Título Parte 1</label>
@@ -1112,7 +1351,46 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* SEÇÃO 5: 360-MESSAGE */}
+                {/* SEÇÃO 6: MARCAS & CLIENTES */}
+                {textSection === 'marcas' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Título e Subtítulo da Seção de Marcas</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Tag / Título da Seção (ex: Marcas que confiam em nós)</label>
+                          <input
+                            type="text"
+                            value={content.copy[textLang]?.brands?.[0] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              if (!updated.copy[textLang].brands) updated.copy[textLang].brands = ['', '']
+                              updated.copy[textLang].brands[0] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Subtítulo / Descrição da Seção</label>
+                          <textarea
+                            rows={3}
+                            value={content.copy[textLang]?.brands?.[1] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              if (!updated.copy[textLang].brands) updated.copy[textLang].brands = ['', '']
+                              updated.copy[textLang].brands[1] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px', resize: 'vertical' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SEÇÃO 7: 360-MESSAGE */}
                 {textSection === 'produto' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
@@ -1233,12 +1511,25 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* SEÇÃO 6: CONTATO */}
+                {/* SEÇÃO 8: CONTATO */}
                 {textSection === 'contato' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
                       <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>Textos da Seção de Contato</h4>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Tag Superior (ex: Contacto / Contact)</label>
+                          <input
+                            type="text"
+                            value={content.copy[textLang].contact[0] || ''}
+                            onChange={e => {
+                              const updated = { ...content }
+                              updated.copy[textLang].contact[0] = e.target.value
+                              updateContent(updated)
+                            }}
+                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          />
+                        </div>
                         <div>
                           <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Título Parte 1</label>
                           <input
@@ -1322,7 +1613,7 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* SEÇÃO 7: GERAL */}
+                {/* SEÇÃO 9: MENU & RODAPÉ */}
                 {textSection === 'geral' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ padding: '18px', background: ui.cardBg, border: `1px solid ${ui.border}`, borderRadius: '14px' }}>
