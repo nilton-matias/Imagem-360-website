@@ -534,32 +534,13 @@ export default function V3() {
                     : 'Promoting national and international brands through biodegradable bags used to store food products and more.')}
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {(ecoMedia?.highlights || [
-                    lang === 'pt' ? 'Ecológico e indispensável' : 'Eco-friendly and essential',
-                    lang === 'pt' ? 'Distribuição nos estabelecimentos comerciais' : 'Distribution in retail establishments',
-                    lang === 'pt' ? '0% de desperdício' : '0% waste',
-                  ]).map((label, idx) => {
-                    const icons = [
-                      'M20.8 3.2C14 3.5 8.6 5.8 6.1 10.1c-1.9 3.2-.8 6.5 1.6 8.2 2.6 1.8 6.2 1.1 8.1-1.8 2.4-3.7 2.1-8.3 5-13.3ZM5 21c2-5 5.5-8.2 10.5-10.5',
-                      'M4 20V10l8-6 8 6v10M8 20v-6h8v6',
-                      'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z'
-                    ]
-                    return (
-                      <div key={idx} style={{ padding: '14px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(232,56,74,0.04)', borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(232,56,74,0.10)'}` }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={idx === 0 ? '#2f9e62' : R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={icons[idx % 3]} /></svg>
-                        <div style={{ fontSize: '12px', color: t.fgMuted, lineHeight: 1.4, transition: 'color 0.3s' }}>{label}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {[
                     { icon: 'M20.8 3.2C14 3.5 8.6 5.8 6.1 10.1c-1.9 3.2-.8 6.5 1.6 8.2 2.6 1.8 6.2 1.1 8.1-1.8 2.4-3.7 2.1-8.3 5-13.3ZM5 21c2-5 5.5-8.2 10.5-10.5', color: '#2f9e62', label: ecoMedia?.highlights?.[0] || (lang === 'pt' ? 'Ecológico e indispensável' : 'Eco-friendly and essential') },
-                    { icon: 'M4 20V10l8-6 8 6v10M8 20v-6h8v6', label: ecoMedia?.highlights?.[1] || (lang === 'pt' ? 'Distribuição nos estabelecimentos comerciais' : 'Distribution in retail establishments') },
-                    { icon: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z', label: ecoMedia?.highlights?.[2] || (lang === 'pt' ? '0% de desperdício' : '0% waste') },
-                  ].map(item => (
-                    <div key={item.label} style={{ padding: '14px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(232,56,74,0.04)', borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(232,56,74,0.10)'}` }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={'color' in item ? item.color : R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={item.icon} /></svg>
+                    { icon: 'M4 20V10l8-6 8 6v10M8 20v-6h8v6', color: R, label: ecoMedia?.highlights?.[1] || (lang === 'pt' ? 'Distribuição nos estabelecimentos comerciais' : 'Distribution in retail establishments') },
+                    { icon: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z', color: R, label: ecoMedia?.highlights?.[2] || (lang === 'pt' ? '0% de desperdício' : '0% waste') },
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ padding: '14px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(232,56,74,0.04)', borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(232,56,74,0.10)'}`, gridColumn: idx === 2 ? 'span 2' : undefined }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={item.color || R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={item.icon} /></svg>
                       <div style={{ fontSize: '12px', color: t.fgMuted, lineHeight: 1.4, transition: 'color 0.3s' }}>{item.label}</div>
                     </div>
                   ))}
