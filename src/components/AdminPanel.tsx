@@ -117,13 +117,13 @@ export default function AdminPanel() {
   }
 
   const handlePublish = async () => {
-    setSaveStatus({ type: 'loading', message: 'Publicando alterações...' })
+    setSaveStatus({ type: 'loading', message: 'Salvando e actualizando...' })
     const res = await publishContent(content)
     if (res.success) {
       clearDraft()
       setSaveStatus({
         type: 'success',
-        message: res.message,
+        message: 'Página actualizada com sucesso! Recarregue a página para ver as novidades.',
         url: res.commitUrl,
       })
       setTimeout(() => setSaveStatus({ type: null, message: '' }), 6000)
@@ -182,7 +182,7 @@ export default function AdminPanel() {
               disabled={saveStatus.type === 'loading'}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#e8384a', color: '#fff', border: 'none', borderRadius: '999px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(232,56,74,0.3)' }}
             >
-              {saveStatus.type === 'loading' ? '⏳ Publicando...' : '🚀 Publicar Alterações'}
+              {saveStatus.type === 'loading' ? '⏳ Salvando...' : '💾 Salvar e actualizar'}
             </button>
             <button onClick={logout} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${ui.border}`, borderRadius: '999px', color: ui.textMuted, fontSize: '12px', cursor: 'pointer' }}>
               Sair

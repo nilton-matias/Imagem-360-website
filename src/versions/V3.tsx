@@ -612,9 +612,9 @@ export default function V3() {
               { l: 'Channels', v: 'We offer the best digital marketing and out-of-home advertising channels.' },
               { l: 'Team', v: 'We have a dedicated, brilliant and highly responsible team.' },
             ]).map((row, i, arr) => (
-              <div key={i} style={{ padding: '20px 0', borderTop: `1px solid ${t.border}`, borderBottom: i === arr.length - 1 ? `1px solid ${t.border}` : 'none', display: 'flex', gap: '16px', transition: 'border-color 0.3s' }}>
-                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.2em', color: R, fontWeight: 700, width: '50px', flexShrink: 0, paddingTop: '2px' }}>{row.l}</span>
-                <p style={{ fontSize: '13px', color: t.fgMid, lineHeight: 1.65, transition: 'color 0.3s' }}>{row.v}</p>
+              <div key={i} style={{ padding: '20px 0', borderTop: `1px solid ${t.border}`, borderBottom: i === arr.length - 1 ? `1px solid ${t.border}` : 'none', display: 'flex', gap: '20px', alignItems: 'baseline', transition: 'border-color 0.3s' }}>
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: R, fontWeight: 700, width: '100px', minWidth: '100px', flexShrink: 0 }}>{row.l}</span>
+                <p style={{ fontSize: '13px', color: t.fgMid, lineHeight: 1.65, transition: 'color 0.3s', margin: 0 }}>{row.v}</p>
               </div>
             ))}
           </div>
@@ -793,35 +793,6 @@ export default function V3() {
         <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)' }}>
           © 2025 {copy.footer?.copyright || (lang === 'pt' ? 'Todos os direitos do autor reservados' : 'All rights reserved')}
         </span>
-        <button
-          onClick={() => setIsAdminOpen(true)}
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '999px',
-            padding: '6px 14px',
-            color: 'rgba(255,255,255,0.6)',
-            fontSize: '11px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(232,56,74,0.15)'
-            e.currentTarget.style.borderColor = R
-            e.currentTarget.style.color = '#fff'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-            e.currentTarget.style.color = 'rgba(255,255,255,0.6)'
-          }}
-        >
-          <span>🔐</span> Painel Admin
-        </button>
       </footer>
     </div>
   )
