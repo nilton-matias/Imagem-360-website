@@ -277,7 +277,11 @@ const server = http.createServer((req, res) => {
 
   // ROTA: /api/content
   if (url === '/api/content') {
-    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+    })
     try {
       if (fs.existsSync(SITE_CONTENT_PATH)) {
         const fileData = fs.readFileSync(SITE_CONTENT_PATH, 'utf8')

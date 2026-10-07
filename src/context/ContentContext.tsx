@@ -29,6 +29,7 @@ interface ContentContextType {
 }
 
 const STORAGE_KEY_CONTENT = 'imagem360_site_content_draft'
+const STORAGE_KEY_PUBLISHED = 'imagem360_site_content_published'
 const STORAGE_KEY_AUTH = 'imagem360_admin_auth'
 const STORAGE_KEY_PW = 'imagem360_admin_password'
 
@@ -41,12 +42,16 @@ export const ContentProvider: React.FC<{
 }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_CONTENT)
-      if (saved) {
-        return JSON.parse(saved)
+      const draft = localStorage.getItem(STORAGE_KEY_CONTENT)
+      if (draft) {
+        return JSON.parse(draft)
+      }
+      const published = localStorage.getItem(STORAGE_KEY_PUBLISHED)
+      if (published) {
+        return JSON.parse(published)
       }
     } catch (e) {
-      console.error('Erro ao ler rascunho local:', e)
+      console.error('Erro ao ler rascunho/cache local:', e)
     }
     return defaultContent as SiteContent
   })
@@ -77,18 +82,28 @@ export const ContentProvider: React.FC<{
     return false
   })
 
-  // Sincroniza conteúdo publicado do servidor AWS
+  // Sincroniza conteúdo publicado do servidor AWS / local
   useEffect(() => {
     let cancelled = false
     async function loadServerContent() {
       try {
-        const response = await fetch('/api/content', {
+        const response = await fetch('/api/content?t=' + Date.now(), {
           cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
         })
         if (!response.ok) return
         const data = await response.json()
         if (!cancelled && data?.content) {
-          setContent(data.content)
+          // Atualiza o cache do conteúdo publicado
+          try {
+            localStorage.setItem(STORAGE_KEY_PUBLISHED, JSON.stringify(data.content))
+          } catch {}
+
+          // Se o utilizador não tiver um rascunho local pendente, atualiza o ecrã
+          const hasDraft = Boolean(localStorage.getItem(STORAGE_KEY_CONTENT))
+          if (!hasDraft) {
+            setContent(data.content)
+          }
         }
       } catch {}
     }
@@ -161,13 +176,20 @@ export const ContentProvider: React.FC<{
   const clearDraft = () => {
     try {
       localStorage.removeItem(STORAGE_KEY_CONTENT)
+      // Guarda a versão publicada atual no cache permanente
+      localStorage.setItem(STORAGE_KEY_PUBLISHED, JSON.stringify(content))
     } catch {}
-    setContent(defaultContent as SiteContent)
+    // Mantém o conteúdo atual no ecrã (NÃO reverte para os valores default antigos)
     setHasLocalDraft(false)
   }
 
   const resetToOriginal = () => {
-    clearDraft()
+    try {
+      localStorage.removeItem(STORAGE_KEY_CONTENT)
+      localStorage.removeItem(STORAGE_KEY_PUBLISHED)
+    } catch {}
+    setContent(defaultContent as SiteContent)
+    setHasLocalDraft(false)
   }
 
   const login = (password: string): boolean => {

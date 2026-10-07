@@ -466,6 +466,25 @@ function apiDevServer(env: Record<string, string>): Plugin {
           return
         }
 
+        if (url === '/api/content') {
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+          res.setHeader('Pragma', 'no-cache')
+          try {
+            const targetPath = path.resolve(import.meta.dirname, 'src/data/site-content.json')
+            if (fs.existsSync(targetPath)) {
+              const fileData = fs.readFileSync(targetPath, 'utf8')
+              res.end(JSON.stringify({ success: true, content: JSON.parse(fileData) }))
+              return
+            }
+          } catch (e) {
+            console.error('API Content dev server error:', e)
+          }
+          res.end(JSON.stringify({ success: true }))
+          return
+        }
+
         next()
       })
     },
