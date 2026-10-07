@@ -394,30 +394,27 @@ export default function V3() {
             <div className="hero-outer-ring" style={{ border: `1px solid ${dark ? 'rgba(232,56,74,0.35)' : 'rgba(232,56,74,0.22)'}`, boxShadow: `0 0 80px ${dark ? 'rgba(232,56,74,0.12)' : 'rgba(232,56,74,0.08)'}` }} />
             <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, overflow: 'visible' }}>
               <defs>
-                <marker id="flow-arrow-start" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill={R} />
-                </marker>
-                <marker id="flow-arrow-end" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill={R} />
+                <marker id="flow-arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill={R} />
                 </marker>
               </defs>
               {[
-                { d: 'M250 160 C250 125 250 95 250 52', delay: '0s' },
-                { d: 'M190 290 C155 330 120 375 80 420', delay: '0.7s' },
-                { d: 'M310 290 C345 330 380 375 420 420', delay: '1.4s' },
+                { d: 'M250 150 C250 120 250 95 250 62', delay: '0s' },
+                { d: 'M185 305 C155 340 120 375 88 412', delay: '0.7s' },
+                { d: 'M315 305 C345 340 380 375 412 412', delay: '1.4s' },
               ].map(flow => (
                 <g key={flow.d}>
                   <path d={flow.d} fill="none" stroke={R} strokeWidth="9" strokeOpacity={dark ? 0.08 : 0.06} />
-                  <path d={flow.d} fill="none" stroke={R} strokeWidth="2" strokeOpacity={dark ? 0.86 : 0.68} markerStart="url(#flow-arrow-start)" markerEnd="url(#flow-arrow-end)" />
+                  <path d={flow.d} fill="none" stroke={R} strokeWidth="2" strokeOpacity={dark ? 0.86 : 0.68} markerEnd="url(#flow-arrow-end)" />
                   <circle className="signal-flow-dot" r="4" fill={R}>
-                    <animateMotion dur="2.8s" begin={flow.delay} repeatCount="indefinite" path={flow.d} />
+                    <animateMotion dur="2.4s" begin={flow.delay} repeatCount="indefinite" path={flow.d} />
                   </circle>
                   <circle className="signal-flow-dot" r="3" fill={R} fillOpacity="0.58">
-                    <animateMotion dur="2.8s" begin={flow.delay} repeatCount="indefinite" path={flow.d} keyPoints="1;0" keyTimes="0;1" calcMode="linear" />
+                    <animateMotion dur="2.4s" begin={flow.delay} repeatCount="indefinite" path={flow.d} keyPoints="1;0" keyTimes="0;1" calcMode="linear" />
                   </circle>
                 </g>
               ))}
-              {[[250, 160], [190, 290], [310, 290], [250, 52], [80, 420], [420, 420]].map(([cx, cy]) => (
+              {[[250, 150], [185, 305], [315, 305]].map(([cx, cy]) => (
                 <g key={`${cx}-${cy}`}>
                   <circle cx={cx} cy={cy} r="7" fill={dark ? '#000000' : '#ffffff'} stroke={R} strokeWidth="1.5" />
                   <circle cx={cx} cy={cy} r="3" fill={R} />
