@@ -41,31 +41,57 @@ html {
   align-items: center;
   justify-content: center;
   position: relative;
-  min-height: 500px;
+  min-height: 480px;
   width: 100%;
 }
 @media (max-width: 768px) {
   .hero-visual-flow {
     order: 2;
-    min-height: 440px !important;
+    min-height: 380px !important;
     max-width: 100%;
-    margin: 16px auto 0;
-    transform: scale(0.85);
+    margin: 8px auto 0;
+    transform: scale(0.78);
     transform-origin: center center;
   }
 }
 @media (max-width: 440px) {
   .hero-visual-flow {
-    min-height: 380px !important;
-    transform: scale(0.74);
+    min-height: 320px !important;
+    transform: scale(0.68);
     transform-origin: center center;
   }
 }
-@media (max-width: 360px) {
+@media (max-width: 375px) {
   .hero-visual-flow {
-    min-height: 340px !important;
-    transform: scale(0.66);
+    min-height: 280px !important;
+    transform: scale(0.58);
     transform-origin: center center;
+  }
+}
+@media (max-width: 330px) {
+  .hero-visual-flow {
+    min-height: 250px !important;
+    transform: scale(0.50);
+    transform-origin: center center;
+  }
+}
+
+/* Grade de Marcas — 4 colunas em desktop/tablet, 2 colunas em mobile */
+.brands-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .brands-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+@media (max-width: 480px) {
+  .brands-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
 

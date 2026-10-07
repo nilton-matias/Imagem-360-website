@@ -208,6 +208,9 @@ export default function V3() {
 
       setSent(true)
       setForm({ name: '', email: '', subject: '', message: '' })
+      setTimeout(() => {
+        setSent(false)
+      }, 5000)
     } catch (err: any) {
       setSendError(err.message || 'Erro ao enviar mensagem. Tente novamente.')
     } finally {
@@ -434,8 +437,8 @@ export default function V3() {
               <span style={{ color: t.fg, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{copy.hero[4] || (lang === 'pt' ? 'Utilizador' : 'User')}</span>
             </div>
             {[
-              { label: copy.hero[5] || (lang === 'pt' ? 'Comunicação' : 'Communication'), type: 'communication', bottom: '10%', right: '-2%' },
-              { label: copy.hero[6] || 'Marketing', type: 'marketing', bottom: '10%', left: '0%' },
+              { label: copy.hero[5] || (lang === 'pt' ? 'Comunicação' : 'Communication'), type: 'communication', bottom: '10%', right: '2%' },
+              { label: copy.hero[6] || 'Marketing', type: 'marketing', bottom: '10%', left: '2%' },
             ].map(item => (
               <div key={item.label} style={{ position: 'absolute', right: item.right, bottom: item.bottom, left: item.left, zIndex: 3, display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 18px', borderRadius: '999px', background: dark ? 'rgba(15,15,15,0.9)' : 'rgba(255,255,255,0.94)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, backdropFilter: 'blur(14px)' }}>
                 <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: R, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 0 5px ${R}22` }}>
@@ -641,13 +644,13 @@ export default function V3() {
           <p style={{ fontSize: '15px', color: t.fgMuted, marginBottom: '44px', transition: 'color 0.3s' }}>
             {copy.brands[1]}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '16px' }}>
+          <div className="brands-grid-4">
             {clients.map(c => (
               <div key={('id' in c && (c as any).id) || c.name}
                 style={{ padding: '24px 18px', background: dark ? 'rgba(255,255,255,0.045)' : '#ffffff', borderRadius: '18px', border: `1px solid ${dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', transition: 'all 0.25s', boxShadow: dark ? '0 14px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035)' : '0 8px 28px rgba(0,0,0,0.07)', minHeight: '124px', overflow: 'hidden', isolation: 'isolate' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = `${R}55`; e.currentTarget.style.boxShadow = `0 8px 28px ${R}18` }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)'; e.currentTarget.style.boxShadow = dark ? '0 14px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035)' : '0 8px 28px rgba(0,0,0,0.07)' }}>
-                <div style={{ width: '170px', height: '76px', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: dark ? '0 8px 24px rgba(0,0,0,0.28)' : 'none' }}>
+                <div style={{ width: '100%', maxWidth: '170px', height: '76px', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: dark ? '0 8px 24px rgba(0,0,0,0.28)' : 'none' }}>
                   <img
                     src={resolveImageSource(c.img)}
                     alt={c.name}
