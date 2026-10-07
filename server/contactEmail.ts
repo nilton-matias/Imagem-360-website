@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import nodemailer from 'nodemailer'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 
@@ -128,7 +129,7 @@ function buildAgencyNotificationEmail(data: ReturnType<typeof normalizeContactPa
           <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td style="width:48px;vertical-align:middle;padding-right:14px;">
-                <img src="https://raw.githubusercontent.com/nilton-matias/Imagem-360-website/main/public/logo_360.png" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
+                <img src="https://media.githubusercontent.com/media/nilton-matias/Imagem-360-website/main/public/logo_360.png" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
               </td>
               <td style="vertical-align:middle;">
                 <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
@@ -202,7 +203,7 @@ function buildClientConfirmationEmail(data: ReturnType<typeof normalizeContactPa
           <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td style="width:44px;vertical-align:middle;padding-right:14px;">
-                <img src="cid:logo360" alt="Imagem 360" width="38" height="38" style="display:block;width:38px;height:38px;object-fit:contain;border:0;outline:none;" />
+                <img src="https://media.githubusercontent.com/media/nilton-matias/Imagem-360-website/main/public/logo_360.png" alt="Imagem 360" width="38" height="38" style="display:block;width:38px;height:38px;object-fit:contain;border:0;outline:none;" />
               </td>
               <td style="vertical-align:middle;">
                 <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
@@ -246,76 +247,93 @@ export async function sendContactEmail(
     return { ok: false, status: 400, body: { error: validationError } }
   }
 
-  const apiKey = env.RESEND_API_KEY
-  if (!apiKey) {
-    return {
-      ok: false,
-      status: 500,
-      body: { error: 'RESEND_API_KEY não configurada no servidor.' },
-    }
-  }
-
   const normalized = normalizeContactPayload(payload)
 
   // Destinatário da agência
-  const rawTo = (env.CONTACT_TO_EMAIL || env.QUOTE_TO_EMAIL || env.RESEND_TO_EMAIL || 'nilton.nhanteme@gmail.com').trim()
+  const rawTo = (env.CONTACT_TO_EMAIL || env.QUOTE_TO_EMAIL || env.SMTP_USER || 'nilton.nhanteme@gmail.com').trim()
   const to = rawTo.includes('@') && rawTo.includes('.') ? rawTo : 'nilton.nhanteme@gmail.com'
-  const from = env.RESEND_FROM_EMAIL || 'Imagem 360 <onboarding@resend.dev>'
 
   const { subject, text, html } = buildAgencyNotificationEmail(normalized)
 
-  console.info('[resend] Enviando mensagem de contacto para', to, 'com assunto:', subject)
-
-  // Prepara o logotipo oficial como anexo inline reconhecido pela Resend
-  const attachments = LOGO_BASE64
-    ? [
-        {
-          filename: 'logo_novo_360.png',
-          content: LOGO_BASE64,
-          content_type: 'image/png',
-          content_id: 'logo360',
+  // 1. Envio prioritário via Nodemailer SMTP (Google Workspace / Gmail)
+  if (env.SMTP_USER && env.SMTP_PASS) {
+    try {
+      const port = parseInt(env.SMTP_PORT || '465', 10)
+      const transporter = nodemailer.createTransport({
+        host: env.SMTP_HOST || 'smtp.gmail.com',
+        port,
+        secure: port === 465,
+        auth: {
+          user: env.SMTP_USER,
+          pass: env.SMTP_PASS,
         },
-      ]
-    : undefined
+      })
 
-  // 1. Envio principal para a agência
-  const response = await fetch(RESEND_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: [to],
-      reply_to: normalized.email,
-      subject,
-      text,
-      html,
-      attachments,
-    }),
-  })
+      const fromName = env.SMTP_FROM_NAME || 'Imagem 360 Website'
+      const info = await transporter.sendMail({
+        from: `"${fromName}" <${env.SMTP_USER}>`,
+        to,
+        replyTo: normalized.email,
+        subject,
+        text,
+        html,
+      })
 
-  const data = (await response.json().catch(() => ({}))) as { id?: string; message?: string; error?: string }
+      console.info('[smtp] Mensagem enviada com sucesso via Nodemailer, messageId:', info.messageId)
 
-  if (!response.ok) {
-    console.error('[resend] Falha no envio para Resend', {
-      status: response.status,
-      error: data.message || data.error,
-    })
-    return {
-      ok: false,
-      status: response.status,
-      body: { error: data.message || data.error || 'Falha ao enviar email pelo serviço Resend.' },
+      // Envio de confirmação ao cliente
+      try {
+        const confirmation = buildClientConfirmationEmail(normalized)
+        await transporter.sendMail({
+          from: `"${fromName}" <${env.SMTP_USER}>`,
+          to: normalized.email,
+          replyTo: to,
+          subject: confirmation.subject,
+          text: confirmation.text,
+          html: confirmation.html,
+        }).catch(err => {
+          console.warn('[smtp] Aviso: Confirmação ao cliente não enviada:', err?.message || err)
+        })
+      } catch (err) {
+        console.warn('[smtp] Aviso: Erro ao enviar confirmação ao cliente:', err)
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          id: info.messageId,
+          message: 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.',
+        },
+      }
+    } catch (smtpErr: any) {
+      console.error('[smtp] Falha ao enviar via Nodemailer SMTP:', smtpErr)
+      return {
+        ok: false,
+        status: 500,
+        body: { error: 'Erro ao enviar email pelo servidor SMTP: ' + (smtpErr?.message || '') },
+      }
     }
   }
 
-  console.info('[resend] Mensagem enviada com sucesso, id:', data.id)
+  // 2. Fallback via Resend se RESEND_API_KEY estiver configurada
+  const apiKey = env.RESEND_API_KEY
+  if (apiKey) {
+    const from = env.RESEND_FROM_EMAIL || 'Imagem 360 <onboarding@resend.dev>'
+    console.info('[resend] Enviando mensagem de contacto para', to, 'com assunto:', subject)
 
-  // 2. Enviar email de confirmação para o visitante com o mesmo logotipo inline
-  try {
-    const confirmation = buildClientConfirmationEmail(normalized)
-    await fetch(RESEND_ENDPOINT, {
+    const attachments = LOGO_BASE64
+      ? [
+          {
+            filename: 'logo_novo_360.png',
+            content: LOGO_BASE64,
+            content_type: 'image/png',
+            content_id: 'logo360',
+          },
+        ]
+      : undefined
+
+    const response = await fetch(RESEND_ENDPOINT, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -323,27 +341,69 @@ export async function sendContactEmail(
       },
       body: JSON.stringify({
         from,
-        to: [normalized.email],
-        reply_to: to,
-        subject: confirmation.subject,
-        text: confirmation.text,
-        html: confirmation.html,
+        to: [to],
+        reply_to: normalized.email,
+        subject,
+        text,
+        html,
         attachments,
       }),
-    }).catch(err => {
-      console.warn('[resend] Confirmação ao cliente não enviada:', err?.message || err)
     })
-  } catch (err) {
-    console.warn('[resend] Erro ao enviar confirmação ao cliente:', err)
+
+    const data = (await response.json().catch(() => ({}))) as { id?: string; message?: string; error?: string }
+
+    if (!response.ok) {
+      console.error('[resend] Falha no envio para Resend', {
+        status: response.status,
+        error: data.message || data.error,
+      })
+      return {
+        ok: false,
+        status: response.status,
+        body: { error: data.message || data.error || 'Falha ao enviar email pelo serviço Resend.' },
+      }
+    }
+
+    console.info('[resend] Mensagem enviada com sucesso, id:', data.id)
+
+    try {
+      const confirmation = buildClientConfirmationEmail(normalized)
+      await fetch(RESEND_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to: [normalized.email],
+          reply_to: to,
+          subject: confirmation.subject,
+          text: confirmation.text,
+          html: confirmation.html,
+          attachments,
+        }),
+      }).catch(err => {
+        console.warn('[resend] Confirmação ao cliente não enviada:', err?.message || err)
+      })
+    } catch (err) {
+      console.warn('[resend] Erro ao enviar confirmação ao cliente:', err)
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        id: data.id,
+        message: 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.',
+      },
+    }
   }
 
   return {
-    ok: true,
-    status: 200,
-    body: {
-      id: data.id,
-      message: 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.',
-    },
+    ok: false,
+    status: 500,
+    body: { error: 'Nenhum serviço de envio de email configurado (configure SMTP_USER e SMTP_PASS no .env).' },
   }
 }
 
