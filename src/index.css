@@ -22,30 +22,65 @@ html {
   scroll-behavior: smooth;
 }
 
-/* V3 hero grid — colapsa em mobile e exibe o gráfico com utilizador/marketing/comunicação abaixo de explorar serviços */
+/* V3 hero grid — colapsa em mobile e exibe o gráfico abaixo de explorar serviços */
 .hero-grid {
+  display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
 }
 @media (max-width: 768px) {
   .hero-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
   }
-  .hero-grid > div:last-child {
-    display: flex;
+}
+
+.hero-visual-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 500px;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .hero-visual-flow {
     order: 2;
-    width: 100%;
-    max-width: 420px;
-    margin: 12px auto 0;
     min-height: 440px !important;
+    max-width: 100%;
+    margin: 16px auto 0;
     transform: scale(0.85);
     transform-origin: center center;
   }
 }
 @media (max-width: 440px) {
-  .hero-grid > div:last-child {
-    transform: scale(0.74);
+  .hero-visual-flow {
     min-height: 380px !important;
+    transform: scale(0.74);
+    transform-origin: center center;
+  }
+}
+@media (max-width: 360px) {
+  .hero-visual-flow {
+    min-height: 340px !important;
+    transform: scale(0.66);
+    transform-origin: center center;
+  }
+}
+
+/* Grade de Números de Impacto — 3 colunas em desktop, 2 no mobile com o 3º item ocupando as 2 colunas */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .stat-cell-last {
+    grid-column: span 2 !important;
   }
 }
 

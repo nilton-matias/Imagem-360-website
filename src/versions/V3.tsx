@@ -334,7 +334,7 @@ export default function V3() {
         {/* Glow fundo */}
         <div style={{ position: 'absolute', top: '-10%', right: '5%', width: '55vw', height: '55vw', maxWidth: '700px', maxHeight: '700px', borderRadius: '50%', background: dark ? 'radial-gradient(circle, rgba(232,56,74,0.14) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(232,56,74,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: '1160px', margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center' }} className="hero-grid">
+        <div style={{ maxWidth: '1160px', margin: '0 auto', width: '100%' }} className="hero-grid">
 
           {/* Texto */}
           <div>
@@ -356,7 +356,7 @@ export default function V3() {
           </div>
 
           {/* Sistema visual: marca, utilizador, comunicação e marketing */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '500px' }}>
+          <div className="hero-visual-flow">
             <div style={{ position: 'absolute', width: '390px', height: '390px', borderRadius: '50%', border: `1px solid ${dark ? 'rgba(232,56,74,0.35)' : 'rgba(232,56,74,0.22)'}`, boxShadow: `0 0 80px ${dark ? 'rgba(232,56,74,0.12)' : 'rgba(232,56,74,0.08)'}` }} />
             <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, overflow: 'visible' }}>
               <defs>
@@ -494,12 +494,13 @@ export default function V3() {
             {copy.impact[1]}<br />{copy.impact[2]}
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '2px', borderRadius: '22px', overflow: 'hidden', background: t.border, border: `1px solid ${t.border}`, marginBottom: '56px' }}>
+          <div className="stats-grid" style={{ borderRadius: '22px', overflow: 'hidden', background: t.border, border: `1px solid ${t.border}`, marginBottom: '56px' }}>
             {stats.map((s, i) => {
               const label = 'labelPt' in s ? (lang === 'pt' ? (s as any).labelPt : (s as any).labelEn) : (s as any).label
               return (
                 <StatCell
                   key={('id' in s && (s as any).id) || i}
+                  className={i === stats.length - 1 ? 'stat-cell-last' : ''}
                   value={s.value}
                   suffix={s.suffix}
                   prefix={'prefix' in s ? (s as any).prefix : false}
@@ -799,10 +800,10 @@ export default function V3() {
 }
 
 // ── StatCell ──────────────────────────────────────────────
-function StatCell({ value, suffix, prefix = false, label, started, bg, muted }: { value: number; suffix: string; prefix?: boolean; label: string; started: boolean; bg: string; muted: string }) {
+function StatCell({ value, suffix, prefix = false, label, started, bg, muted, className = '' }: { value: number; suffix: string; prefix?: boolean; label: string; started: boolean; bg: string; muted: string; className?: string }) {
   const count = useCountUp(value, 1600, started)
   return (
-    <div style={{ background: bg, padding: '40px 24px', textAlign: 'center', transition: 'background 0.3s' }}>
+    <div className={className} style={{ background: bg, padding: '40px 24px', textAlign: 'center', transition: 'background 0.3s' }}>
       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(2.8rem,5vw,4.5rem)', lineHeight: 1, color: R, marginBottom: '10px' }}>
         {prefix ? suffix : ''}{count}{prefix ? '' : suffix}
       </div>
