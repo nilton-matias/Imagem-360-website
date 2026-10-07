@@ -18,6 +18,28 @@ export interface AboutCard {
   v: string
 }
 
+export interface ServiceChannel {
+  num: string
+  tag: string
+  title: string
+  desc: string
+  items: string[]
+}
+
+export interface ProductFeature {
+  title: string
+  desc: string
+}
+
+export interface EcoMediaSection {
+  badge: string
+  title1: string
+  titleHighlight: string
+  desc: string
+  highlights: string[]
+  steps: string[]
+}
+
 export interface ContactInfo {
   email: string
   phones: string[]
@@ -30,11 +52,18 @@ export interface SiteCopy {
   nav: string[]
   hero: string[]
   services: string[]
+  channels: ServiceChannel[]
+  ecoMedia: EcoMediaSection
   impact: string[]
   about: string[]
+  aboutCards: AboutCard[]
   brands: string[]
   product: string[]
+  productFeatures: ProductFeature[]
   contact: string[]
+  footer: {
+    copyright: string
+  }
 }
 
 export interface SiteContent {

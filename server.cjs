@@ -1,0 +1,277 @@
+const http = require('http')
+const fs = require('fs')
+const path = require('path')
+
+// Carrega variáveis do arquivo .env manualmente para não depender de pacotes externos
+function loadEnv() {
+  const envPath = path.resolve(__dirname, '.env')
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n')
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      const eqIdx = trimmed.indexOf('=')
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim()
+        let val = trimmed.slice(eqIdx + 1).trim()
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1)
+        }
+        if (!process.env[key]) {
+          process.env[key] = val
+        }
+      }
+    }
+  }
+}
+loadEnv()
+
+// Porta padrão 3005 para evitar conflitos com outros projetos (ex: 3000 ou 8080)
+const PORT = parseInt(process.env.PORT || '3005', 10)
+const DIST_DIR = path.resolve(__dirname, 'dist')
+const PUBLIC_DIR = path.resolve(__dirname, 'public')
+const SITE_CONTENT_PATH = path.resolve(__dirname, 'src/data/site-content.json')
+
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
+}
+
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+}
+
+// Handler de envio de email via Resend
+async function handleContact(req, res, body) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    res.writeHead(500, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ error: 'RESEND_API_KEY não configurada no arquivo .env.' }))
+  }
+
+  const nome = (body?.nome || body?.name || '').trim()
+  const email = (body?.email || '').trim().toLowerCase()
+  const assunto = (body?.assunto || body?.subject || 'Contacto via Website').trim()
+  const mensagem = (body?.mensagem || body?.message || '').trim()
+  const telefone = (body?.telefone || body?.phone || '').trim()
+
+  if (!nome) {
+    res.writeHead(400, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ error: 'Por favor, indique o seu nome.' }))
+  }
+  if (!email || !email.includes('@')) {
+    res.writeHead(400, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ error: 'Por favor, indique um email válido.' }))
+  }
+  if (!mensagem) {
+    res.writeHead(400, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ error: 'Por favor, escreva a sua mensagem.' }))
+  }
+
+  const rawTo = (process.env.CONTACT_TO_EMAIL || 'nilton.nhanteme@gmail.com').trim()
+  const to = rawTo.includes('@') && rawTo.includes('.') ? rawTo : 'nilton.nhanteme@gmail.com'
+  const from = process.env.RESEND_FROM_EMAIL || 'Imagem 360 <onboarding@resend.dev>'
+
+  const emailSubject = `IMAGEM 360 - ${assunto}`
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:24px 16px;margin:0;">
+      <div style="max-width:580px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
+        <div style="background-color:#ffffff;padding:20px 28px;border-bottom:2px solid #e8384a;">
+          <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;">IMAGEM 360</div>
+          <h1 style="color:#0f172a;margin:8px 0 0;font-size:18px;font-weight:800;">Nova Mensagem de Contacto</h1>
+        </div>
+        <div style="padding:28px;">
+          <p style="margin:0 0 8px;"><strong>Nome:</strong> ${nome}</p>
+          <p style="margin:0 0 8px;"><strong>Email:</strong> ${email}</p>
+          ${telefone ? `<p style="margin:0 0 8px;"><strong>Telefone:</strong> ${telefone}</p>` : ''}
+          <p style="margin:0 0 16px;"><strong>Assunto:</strong> ${assunto}</p>
+          <div style="padding:16px;background-color:#f8fafc;border-radius:8px;border-left:4px solid #e8384a;margin-bottom:24px;">
+            <p style="margin:0;color:#334155;line-height:1.6;white-space:pre-wrap;">${mensagem}</p>
+          </div>
+          <a href="mailto:${email}?subject=Re:%20${encodeURIComponent(assunto)}" style="display:inline-block;background-color:#e8384a;color:#ffffff;text-decoration:none;padding:11px 22px;border-radius:999px;font-weight:700;font-size:13px;">Responder a ${nome}</a>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  try {
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        reply_to: email,
+        subject: emailSubject,
+        text: `Nome: ${nome}\nEmail: ${email}\nAssunto: ${assunto}\n\nMensagem:\n${mensagem}`,
+        html: htmlBody,
+      }),
+    })
+
+    const resendData = await resendRes.json().catch(() => ({}))
+
+    if (!resendRes.ok) {
+      res.writeHead(resendRes.status, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({ error: resendData.message || 'Falha ao enviar email pelo serviço Resend.' }))
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
+  } catch (err) {
+    console.error('Erro Resend:', err)
+    res.writeHead(500, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ error: 'Erro de comunicação ao enviar email.' }))
+  }
+}
+
+// Handler para salvar conteúdo do painel administrativo
+function handlePublish(req, res, body) {
+  if (!body?.content) {
+    res.writeHead(400, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ success: false, message: 'Nenhum conteúdo enviado para publicação.' }))
+  }
+
+  try {
+    const jsonStr = JSON.stringify(body.content, null, 2)
+    // 1. Salva no arquivo de dados do projeto
+    fs.writeFileSync(SITE_CONTENT_PATH, jsonStr, 'utf8')
+
+    console.log(`[${new Date().toISOString()}] Conteúdo atualizado com sucesso no servidor AWS!`)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({
+      success: true,
+      message: 'Conteúdo e imagens salvos com sucesso no servidor AWS!',
+    }))
+  } catch (err) {
+    console.error('Erro ao salvar site-content:', err)
+    res.writeHead(500, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ success: false, message: 'Erro ao gravar arquivo no disco do servidor.' }))
+  }
+}
+
+// Serve arquivos estáticos (dist e public)
+function serveStaticFile(reqPath, res) {
+  let cleanPath = decodeURIComponent(reqPath.split('?')[0])
+  if (cleanPath === '/') cleanPath = '/index.html'
+
+  // Procura primeiro em dist/
+  let filePath = path.join(DIST_DIR, cleanPath)
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    // Procura em public/ (ex: uploads)
+    const publicPath = path.join(PUBLIC_DIR, cleanPath)
+    if (fs.existsSync(publicPath) && !fs.statSync(publicPath).isDirectory()) {
+      filePath = publicPath
+    } else {
+      // Fallback para SPA (Single Page Application)
+      filePath = path.join(DIST_DIR, 'index.html')
+    }
+  }
+
+  if (!fs.existsSync(filePath)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' })
+    return res.end('404 Not Found')
+  }
+
+  const ext = path.extname(filePath).toLowerCase()
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream'
+
+  res.writeHead(200, { 'Content-Type': contentType })
+  fs.createReadStream(filePath).pipe(res)
+}
+
+// Servidor HTTP
+const server = http.createServer((req, res) => {
+  setCors(res)
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200)
+    return res.end()
+  }
+
+  const url = req.url.split('?')[0]
+
+  // ROTA: /api/contact
+  if (url === '/api/contact') {
+    if (req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({
+        configured: Boolean(process.env.RESEND_API_KEY),
+        service: 'Resend Contact API (AWS Production)',
+      }))
+    }
+
+    if (req.method === 'POST') {
+      const chunks = []
+      req.on('data', chunk => chunks.push(chunk))
+      req.on('end', () => {
+        try {
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+          handleContact(req, res, body)
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'JSON inválido' }))
+        }
+      })
+      return
+    }
+  }
+
+  // ROTA: /api/publish
+  if (url === '/api/publish') {
+    if (req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      return res.end(JSON.stringify({
+        configured: true,
+        storage: 'AWS Local Disk Persistent',
+      }))
+    }
+
+    if (req.method === 'POST') {
+      const chunks = []
+      req.on('data', chunk => chunks.push(chunk))
+      req.on('end', () => {
+        try {
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+          handlePublish(req, res, body)
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'JSON inválido ou payload corrompido' }))
+        }
+      })
+      return
+    }
+  }
+
+  // Se não for rota de API, serve os arquivos estáticos compilados do React
+  serveStaticFile(req.url, res)
+})
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`===============================================`)
+  console.log(` Servidor Imagem 360 rodando na porta ${PORT}`)
+  console.log(` Modo: Produção AWS`)
+  console.log(` Frontend: ${DIST_DIR}`)
+  console.log(` APIs ativas: /api/contact e /api/publish`)
+  console.log(`===============================================`)
+})

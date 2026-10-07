@@ -92,7 +92,10 @@
         "A sua marca nos canais",
         "indispensáveis.",
         "Publicitamos com educação, projetando as melhores soluções de comunicação para as marcas que querem crescer em qualquer parte do mundo.",
-        "Explorar serviços"
+        "Explorar serviços",
+        "Utilizador",
+        "Comunicação",
+        "Marketing"
       ],
       "services": [
         "O que fazemos",
@@ -100,6 +103,60 @@
         "Um só parceiro.",
         "Serviços incluídos"
       ],
+      "channels": [
+        {
+          "num": "01",
+          "tag": "Canal 01",
+          "title": "Marketing Digital",
+          "desc": "Alcance preciso, entrega imediata. SMS, email e redes sociais integrados numa só estratégia.",
+          "items": [
+            "SMS em massa",
+            "SMS Transacional (OTP)",
+            "SMS Bidirecional",
+            "Email Marketing",
+            "Email Transacional",
+            "USSD",
+            "Criação e gestão de redes sociais"
+          ]
+        },
+        {
+          "num": "02",
+          "tag": "Canal 02",
+          "title": "Publicidade Out-of-Home",
+          "desc": "Onde menos se espera, mais se impacta. Publicidade que vai ao encontro das pessoas.",
+          "items": [
+            "Publicidade na mídia ecológica"
+          ]
+        },
+        {
+          "num": "03",
+          "tag": "Canal 03",
+          "title": "Estratégias de Marketing",
+          "desc": "Da ideia à execução — pensamos a comunicação da sua marca de forma integral.",
+          "items": [
+            "Consultoria estratégica",
+            "Identidade Visual",
+            "Criação de campanhas",
+            "Ativações e mais"
+          ]
+        }
+      ],
+      "ecoMedia": {
+        "badge": "Direitos do autor",
+        "title1": "Publicidade na",
+        "titleHighlight": "mídia ecológica",
+        "desc": "Divulgação de marcas nacionais e internacionais, através do uso de sacos biodegradáveis para armazenar produtos alimentares entre outros.",
+        "highlights": [
+          "Ecológico e indispensável",
+          "Distribuição nos estabelecimentos comerciais",
+          "0% de desperdício"
+        ],
+        "steps": [
+          "Produção e impressão com publicidade",
+          "Distribuição em padarias, supermercados, farmácias, entre outros.",
+          "Nas mãos do consumidor diariamente"
+        ]
+      },
       "impact": [
         "Impacto",
         "Números que",
@@ -108,19 +165,65 @@
       "about": [
         "Quem somos",
         "O pensamento",
-        "fora da caixa."
+        "fora da caixa.",
+        "Imagem 360, Lda, agência de marketing e publicidade, existente desde 2015. Nasceu por necessidade de uma empresa criativa com elevação de valores sociais, dinamizando o marketing com respostas a todas as demandas.",
+        "Publicitamos com educação, projetando as melhores soluções."
+      ],
+      "aboutCards": [
+        {
+          "l": "Visão",
+          "v": "Elevar o nível da criatividade, alavancando marcas nacionais e internacionais."
+        },
+        {
+          "l": "Missão",
+          "v": "Comprometimento no crescimento estratégico e manutenção das marcas."
+        },
+        {
+          "l": "Valores",
+          "v": "Responsabilidade ambiental · Social · Qualidade · Eficácia · Integridade · Inovação"
+        },
+        {
+          "l": "Inovação",
+          "v": "Inovamos, trazendo sentido e vida à nossa comunicação."
+        },
+        {
+          "l": "Canais",
+          "v": "Temos os melhores canais de marketing digital e publicidade out of home."
+        },
+        {
+          "l": "Equipa",
+          "v": "Contamos com uma equipa dedicada, genial e super responsável."
+        }
       ],
       "brands": [
         "Marcas que confiam em nós",
         "Empresas moçambicanas e internacionais que escolheram a Imagem 360 como parceira de trabalho."
       ],
       "product": [
-        "Produto — 360-Message",
+        "Produto · 360-Message",
         "A comunicação",
         "da sua marca,",
         "numa só plataforma.",
         "SMS, Email e USSD integrados na plataforma multicanal, rápida e feita para o mercado nacional e internacional.",
         "Experimentar o 360-Message"
+      ],
+      "productFeatures": [
+        {
+          "title": "SMS em Massa",
+          "desc": "Chegue a milhares de contactos em segundos"
+        },
+        {
+          "title": "Email Marketing",
+          "desc": "Campanhas visuais com métricas em tempo real"
+        },
+        {
+          "title": "USSD",
+          "desc": "Interacção directa sem necessidade de internet"
+        },
+        {
+          "title": "Relatórios",
+          "desc": "Dashboards com resultados de cada campanha"
+        }
       ],
       "contact": [
         "Contacto",
@@ -136,7 +239,10 @@
         "Mensagem",
         "Enviar mensagem",
         "Obrigado pelo envio!"
-      ]
+      ],
+      "footer": {
+        "copyright": "Todos os direitos do autor reservados"
+      }
     },
     "en": {
       "nav": [
@@ -151,7 +257,10 @@
         "Your brand across the",
         "essential channels.",
         "We advertise through education, designing the best communication solutions for brands that want to grow anywhere in the world.",
-        "Explore services"
+        "Explore services",
+        "User",
+        "Communication",
+        "Marketing"
       ],
       "services": [
         "What we do",
@@ -159,6 +268,60 @@
         "One partner.",
         "Included services"
       ],
+      "channels": [
+        {
+          "num": "01",
+          "tag": "Channel 01",
+          "title": "Digital Marketing",
+          "desc": "Precise reach, immediate delivery. SMS, email and social media integrated into one strategy.",
+          "items": [
+            "Bulk SMS",
+            "Transactional SMS (OTP)",
+            "Two-way SMS",
+            "Email Marketing",
+            "Transactional Email",
+            "USSD",
+            "Social media creation and management"
+          ]
+        },
+        {
+          "num": "02",
+          "tag": "Channel 02",
+          "title": "Out-of-Home Advertising",
+          "desc": "Where it is least expected, it creates the greatest impact. Advertising that meets people where they are.",
+          "items": [
+            "Eco-media advertising"
+          ]
+        },
+        {
+          "num": "03",
+          "tag": "Channel 03",
+          "title": "Marketing Strategies",
+          "desc": "From idea to execution—we approach your brand communication as a whole.",
+          "items": [
+            "Strategic consulting",
+            "Visual Identity",
+            "Campaign creation",
+            "Activations and more"
+          ]
+        }
+      ],
+      "ecoMedia": {
+        "badge": "Copyright",
+        "title1": "Eco-media",
+        "titleHighlight": "advertising",
+        "desc": "Promoting national and international brands through biodegradable bags used to store food products and more.",
+        "highlights": [
+          "Eco-friendly and essential",
+          "Distribution in retail establishments",
+          "0% waste"
+        ],
+        "steps": [
+          "Production and printing with advertising",
+          "Distribution in bakeries, supermarkets, pharmacies and more.",
+          "In consumers’ hands every day"
+        ]
+      },
       "impact": [
         "Impact",
         "Numbers that",
@@ -167,19 +330,65 @@
       "about": [
         "About us",
         "Thinking",
-        "outside the box."
+        "outside the box.",
+        "Imagem 360, Lda is a marketing and advertising agency established in 2015. It was born from the need for a creative company that elevates social values and energises marketing with answers to every demand.",
+        "We advertise through education, designing the best solutions."
+      ],
+      "aboutCards": [
+        {
+          "l": "Vision",
+          "v": "Elevating creativity to advance national and international brands."
+        },
+        {
+          "l": "Mission",
+          "v": "Commitment to the strategic growth and long-term development of brands."
+        },
+        {
+          "l": "Values",
+          "v": "Environmental responsibility · Social responsibility · Quality · Effectiveness · Integrity · Innovation"
+        },
+        {
+          "l": "Innovation",
+          "v": "We innovate, bringing meaning and life to our communication."
+        },
+        {
+          "l": "Channels",
+          "v": "We offer the best digital marketing and out-of-home advertising channels."
+        },
+        {
+          "l": "Team",
+          "v": "We have a dedicated, brilliant and highly responsible team."
+        }
       ],
       "brands": [
         "Brands that trust us",
         "Mozambican and international companies that chose Imagem 360 as their working partner."
       ],
       "product": [
-        "Product — 360-Message",
+        "Product · 360-Message",
         "Your brand’s",
         "communication,",
         "on one platform.",
         "SMS, Email and USSD integrated into a fast multichannel platform built for national and international markets.",
         "Try 360-Message"
+      ],
+      "productFeatures": [
+        {
+          "title": "Bulk SMS",
+          "desc": "Reach thousands of contacts in seconds"
+        },
+        {
+          "title": "Email Marketing",
+          "desc": "Visual campaigns with real-time metrics"
+        },
+        {
+          "title": "USSD",
+          "desc": "Direct interaction without internet access"
+        },
+        {
+          "title": "Reports",
+          "desc": "Dashboards with results from every campaign"
+        }
       ],
       "contact": [
         "Contact",
@@ -195,7 +404,10 @@
         "Message",
         "Send message",
         "Thank you for your message!"
-      ]
+      ],
+      "footer": {
+        "copyright": "All rights reserved"
+      }
     }
   },
   "contactInfo": {
@@ -204,62 +416,8 @@
       "(+258) 834920306",
       "(+258) 875500828"
     ],
-    "addressPt": "Bairro Central, Av. Maguiguana nº 1245, 1º Andar, Flat 10. Maputo - Moçambique",
-    "addressEn": "Bairro Central, Av. Maguiguana nº 1245, 1st Floor, Flat 10. Maputo - Mozambique",
-    "mapsUrl": "https://maps.google.com"
-  },
-  "aboutCards": {
-    "pt": [
-      {
-        "l": "Visão",
-        "v": "Elevar a criatividade no avanço de marcas nacionais e internacionais."
-      },
-      {
-        "l": "Missão",
-        "v": "Compromisso com o crescimento estratégico e desenvolvimento a longo prazo das marcas."
-      },
-      {
-        "l": "Valores",
-        "v": "Responsabilidade ambiental · Responsabilidade social · Qualidade · Eficácia · Integridade · Inovação"
-      },
-      {
-        "l": "Inovação",
-        "v": "Inovamos trazendo sentido e vida à nossa comunicação."
-      },
-      {
-        "l": "Canais",
-        "v": "Temos os melhores canais de marketing digital e publicidade out of home."
-      },
-      {
-        "l": "Equipa",
-        "v": "Contamos com uma equipa dedicada, genial e super responsável."
-      }
-    ],
-    "en": [
-      {
-        "l": "Vision",
-        "v": "Elevating creativity to advance national and international brands."
-      },
-      {
-        "l": "Mission",
-        "v": "Commitment to the strategic growth and long-term development of brands."
-      },
-      {
-        "l": "Values",
-        "v": "Environmental responsibility · Social responsibility · Quality · Effectiveness · Integrity · Innovation"
-      },
-      {
-        "l": "Innovation",
-        "v": "We innovate, bringing meaning and life to our communication."
-      },
-      {
-        "l": "Channels",
-        "v": "We offer the best digital marketing and out-of-home advertising channels."
-      },
-      {
-        "l": "Team",
-        "v": "We count on a dedicated, brilliant and highly responsible team."
-      }
-    ]
+    "addressPt": "Av. Maguiguana, 845, Maputo, Moçambique",
+    "addressEn": "Av. Maguiguana, 845, Maputo, Mozambique",
+    "mapsUrl": "https://maps.google.com/?q=Av.+Maguiguana+845+Maputo+Mozambique"
   }
 }

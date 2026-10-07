@@ -215,7 +215,11 @@ export default function V3() {
   const { content, setIsAdminOpen, hasLocalDraft, clearDraft } = useSiteContent()
   const t = dark ? D : L
   const copy = content.copy[lang] || COPY[lang]
-  const canais = lang === 'pt' ? CANAIS_PT : CANAIS_EN
+  const canais = copy.channels || (lang === 'pt' ? CANAIS_PT : CANAIS_EN)
+  const ecoMedia = copy.ecoMedia
+  const aboutCards = copy.aboutCards || (content.aboutCards && content.aboutCards[lang])
+  const productFeatures = copy.productFeatures
+  const contactInfo = content.contactInfo
   const stats = content.stats
   const clients = content.clients
   const productLink = content.productLink || 'https://360-message.com'
@@ -396,11 +400,11 @@ export default function V3() {
                   <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
                 </svg>
               </span>
-              <span style={{ color: t.fg, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang === 'pt' ? 'Utilizador' : 'User'}</span>
+              <span style={{ color: t.fg, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{copy.hero[4] || (lang === 'pt' ? 'Utilizador' : 'User')}</span>
             </div>
             {[
-              { label: lang === 'pt' ? 'Comunicação' : 'Communication', type: 'communication', bottom: '10%', right: '-2%' },
-              { label: 'Marketing', type: 'marketing', bottom: '10%', left: '0%' },
+              { label: copy.hero[5] || (lang === 'pt' ? 'Comunicação' : 'Communication'), type: 'communication', bottom: '10%', right: '-2%' },
+              { label: copy.hero[6] || 'Marketing', type: 'marketing', bottom: '10%', left: '0%' },
             ].map(item => (
               <div key={item.label} style={{ position: 'absolute', right: item.right, bottom: item.bottom, left: item.left, zIndex: 3, display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 18px', borderRadius: '999px', background: dark ? 'rgba(15,15,15,0.9)' : 'rgba(255,255,255,0.94)', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, backdropFilter: 'blur(14px)' }}>
                 <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: R, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 0 5px ${R}22` }}>
@@ -515,21 +519,43 @@ export default function V3() {
               <div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '20px', padding: '5px 12px', background: 'rgba(232,56,74,0.08)', borderRadius: '999px', border: '1px solid rgba(232,56,74,0.18)' }}>
                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: R, display: 'inline-block' }} />
-                  <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.22em', color: R, fontWeight: 700 }}>{lang === 'pt' ? 'Direitos do autor' : 'Copyright'}</span>
+                  <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.22em', color: R, fontWeight: 700 }}>
+                    {ecoMedia?.badge || (lang === 'pt' ? 'Direitos do autor' : 'Copyright')}
+                  </span>
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.8rem,3.5vw,3rem)', textTransform: 'uppercase', color: t.fg, lineHeight: 0.88, marginBottom: '16px', letterSpacing: '-0.025em', transition: 'color 0.3s' }}>
-                  {lang === 'pt' ? 'Publicidade na' : 'Eco-media'}<br /><span style={{ color: R }}>{lang === 'pt' ? 'mídia ecológica' : 'advertising'}</span>
+                  {ecoMedia?.title1 || (lang === 'pt' ? 'Publicidade na' : 'Eco-media')}<br />
+                  <span style={{ color: R }}>{ecoMedia?.titleHighlight || (lang === 'pt' ? 'mídia ecológica' : 'advertising')}</span>
                 </h3>
                 <p style={{ fontSize: '15px', color: t.fgMuted, lineHeight: 1.75, marginBottom: '28px', transition: 'color 0.3s' }}>
-                  {lang === 'pt'
+                  {ecoMedia?.desc || (lang === 'pt'
                     ? 'Divulgação de marcas nacionais e internacionais, através do uso de sacos biodegradáveis para armazenar produtos alimentares entre outros.'
-                    : 'Promoting national and international brands through biodegradable bags used to store food products and more.'}
+                    : 'Promoting national and international brands through biodegradable bags used to store food products and more.')}
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  {(ecoMedia?.highlights || [
+                    lang === 'pt' ? 'Ecológico e indispensável' : 'Eco-friendly and essential',
+                    lang === 'pt' ? 'Distribuição nos estabelecimentos comerciais' : 'Distribution in retail establishments',
+                    lang === 'pt' ? '0% de desperdício' : '0% waste',
+                  ]).map((label, idx) => {
+                    const icons = [
+                      'M20.8 3.2C14 3.5 8.6 5.8 6.1 10.1c-1.9 3.2-.8 6.5 1.6 8.2 2.6 1.8 6.2 1.1 8.1-1.8 2.4-3.7 2.1-8.3 5-13.3ZM5 21c2-5 5.5-8.2 10.5-10.5',
+                      'M4 20V10l8-6 8 6v10M8 20v-6h8v6',
+                      'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z'
+                    ]
+                    return (
+                      <div key={idx} style={{ padding: '14px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(232,56,74,0.04)', borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(232,56,74,0.10)'}` }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={idx === 0 ? '#2f9e62' : R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={icons[idx % 3]} /></svg>
+                        <div style={{ fontSize: '12px', color: t.fgMuted, lineHeight: 1.4, transition: 'color 0.3s' }}>{label}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {[
-                    { icon: 'M20.8 3.2C14 3.5 8.6 5.8 6.1 10.1c-1.9 3.2-.8 6.5 1.6 8.2 2.6 1.8 6.2 1.1 8.1-1.8 2.4-3.7 2.1-8.3 5-13.3ZM5 21c2-5 5.5-8.2 10.5-10.5', color: '#2f9e62', label: lang === 'pt' ? 'Ecológico e indispensável' : 'Eco-friendly and essential' },
-                    { icon: 'M4 20V10l8-6 8 6v10M8 20v-6h8v6', label: lang === 'pt' ? 'Distribuição nos estabelecimentos comerciais' : 'Distribution in retail establishments' },
-                    { icon: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z', label: lang === 'pt' ? '0% de desperdício' : '0% waste' },
+                    { icon: 'M20.8 3.2C14 3.5 8.6 5.8 6.1 10.1c-1.9 3.2-.8 6.5 1.6 8.2 2.6 1.8 6.2 1.1 8.1-1.8 2.4-3.7 2.1-8.3 5-13.3ZM5 21c2-5 5.5-8.2 10.5-10.5', color: '#2f9e62', label: ecoMedia?.highlights?.[0] || (lang === 'pt' ? 'Ecológico e indispensável' : 'Eco-friendly and essential') },
+                    { icon: 'M4 20V10l8-6 8 6v10M8 20v-6h8v6', label: ecoMedia?.highlights?.[1] || (lang === 'pt' ? 'Distribuição nos estabelecimentos comerciais' : 'Distribution in retail establishments') },
+                    { icon: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z', label: ecoMedia?.highlights?.[2] || (lang === 'pt' ? '0% de desperdício' : '0% waste') },
                   ].map(item => (
                     <div key={item.label} style={{ padding: '14px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(232,56,74,0.04)', borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(232,56,74,0.10)'}` }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={'color' in item ? item.color : R} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '6px' }}><path d={item.icon} /></svg>
@@ -544,10 +570,7 @@ export default function V3() {
                 <div style={{ borderRadius: '20px', overflow: 'hidden', position: 'relative', aspectRatio: '4/3' }}>
                   <img src={imgBread} alt="Saco de pão brandizado — mídia ecológica" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
-                {(lang === 'pt'
-                  ? ['Produção e impressão com publicidade', 'Distribuição em padarias, supermercados, farmácias, entre outros.', 'Nas mãos do consumidor diariamente']
-                  : ['Production and printing with advertising', 'Distribution in bakeries, supermarkets, pharmacies and more.', 'In consumers’ hands every day']
-                ).map((step, i) => (
+                {(ecoMedia?.steps || (lang === 'pt' ? ['Produção e impressão com publicidade', 'Distribuição em padarias, supermercados, farmácias, entre outros.', 'Nas mãos do consumidor diariamente'] : ['Production and printing with advertising', 'Distribution in bakeries, supermarkets, pharmacies and more.', 'In consumers’ hands every day'])).map((step, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 16px', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderRadius: '12px', border: `1px solid ${t.border}` }}>
                     <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: R, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, flexShrink: 0 }}>{i + 1}</span>
                     <span style={{ fontSize: '13px', color: t.fgMid, transition: 'color 0.3s' }}>{step}</span>
@@ -568,11 +591,9 @@ export default function V3() {
               {copy.about[1]}<br /><span style={{ color: R }}>{copy.about[2]}</span>
             </h2>
             <p style={{ fontSize: '15px', color: t.fgMuted, lineHeight: 1.75, marginBottom: '12px', transition: 'color 0.3s' }}>
-              {lang === 'pt'
-                ? 'Imagem 360, Lda, agência de marketing e publicidade, existente desde 2015. Nasceu por necessidade de uma empresa criativa com elevação de valores sociais, dinamizando o marketing com respostas a todas as demandas.'
-                : 'Imagem 360, Lda is a marketing and advertising agency established in 2015. It was born from the need for a creative company that elevates social values and energises marketing with answers to every demand.'}
+              {copy.about[3] || (lang === 'pt' ? 'Imagem 360, Lda, agência de marketing e publicidade, existente desde 2015. Nasceu por necessidade de uma empresa criativa com elevação de valores sociais, dinamizando o marketing com respostas a todas as demandas.' : 'Imagem 360, Lda is a marketing and advertising agency established in 2015. It was born from the need for a creative company that elevates social values and energises marketing with answers to every demand.')}
             </p>
-            <p style={{ fontSize: '14px', color: t.fgMuted, lineHeight: 1.7, opacity: 0.7 }}>{lang === 'pt' ? 'Publicitamos com educação, projetando as melhores soluções.' : 'We advertise through education, designing the best solutions.'}</p>
+            <p style={{ fontSize: '14px', color: t.fgMuted, lineHeight: 1.7, opacity: 0.7 }}>{copy.about[4] || (lang === 'pt' ? 'Publicitamos com educação, projetando as melhores soluções.' : 'We advertise through education, designing the best solutions.')}</p>
           </div>
 
           <div>
@@ -677,10 +698,10 @@ export default function V3() {
                   </svg>
                 </div>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '14px', color: t.fg, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '-0.01em', transition: 'color 0.3s' }}>
-                  {lang === 'pt' ? f.title : ({ 'SMS em Massa': 'Bulk SMS', 'Email Marketing': 'Email Marketing', USSD: 'USSD', Relatórios: 'Reports' }[f.title] ?? f.title)}
+                  {(productFeatures && productFeatures[fIndex]?.title) || (lang === 'pt' ? f.title : ({ 'SMS em Massa': 'Bulk SMS', 'Email Marketing': 'Email Marketing', USSD: 'USSD', Relatórios: 'Reports' }[f.title] ?? f.title))}
                 </p>
                 <p style={{ fontSize: '12px', color: t.fgMuted, lineHeight: 1.6, transition: 'color 0.3s' }}>
-                  {lang === 'pt' ? f.desc : ({ 'Chegue a milhares de contactos em segundos': 'Reach thousands of contacts in seconds', 'Campanhas visuais com métricas em tempo real': 'Visual campaigns with real-time metrics', 'Interacção directa sem necessidade de internet': 'Direct interaction without internet access', 'Dashboards com resultados de cada campanha': 'Dashboards with results from every campaign' }[f.desc] ?? f.desc)}
+                  {(productFeatures && productFeatures[fIndex]?.desc) || (lang === 'pt' ? f.desc : ({ 'Chegue a milhares de contactos em segundos': 'Reach thousands of contacts in seconds', 'Campanhas visuais com métricas em tempo real': 'Visual campaigns with real-time metrics', 'Interacção directa sem necessidade de internet': 'Direct interaction without internet access', 'Dashboards com resultados de cada campanha': 'Dashboards with results from every campaign' }[f.desc] ?? f.desc))}
                 </p>
               </div>
             ))}
@@ -701,7 +722,7 @@ export default function V3() {
               {/* Endereço com link Google Maps */}
               <div>
                 <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.22em', color: R, fontWeight: 700, marginBottom: '4px' }}>{copy.contact[4]}</p>
-                <span style={{ fontSize: '14px', color: t.fgMid, transition: 'color 0.3s' }}>Av. Maguiguana, 845, Maputo, Moçambique</span>
+                <span style={{ fontSize: '14px', color: t.fgMid, transition: 'color 0.3s' }}>{lang === 'pt' ? (contactInfo?.addressPt || 'Av. Maguiguana, 845, Maputo, Moçambique') : (contactInfo?.addressEn || 'Av. Maguiguana, 845, Maputo, Mozambique')}</span>
                 <div style={{ marginTop: '8px' }}>
                   <a
                     href="https://maps.google.com/?q=Av.+Maguiguana+845+Maputo+Mozambique"
@@ -770,7 +791,7 @@ export default function V3() {
       {/* ── FOOTER ───────────────────────────────────────── */}
       <footer style={{ background: '#000000', padding: 'clamp(24px,4vw,36px) clamp(20px,5vw,80px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
         <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)' }}>
-          © 2025 {lang === 'pt' ? 'Todos os direitos do autor reservados' : 'All rights reserved'}
+          © 2025 {copy.footer?.copyright || (lang === 'pt' ? 'Todos os direitos do autor reservados' : 'All rights reserved')}
         </span>
         <button
           onClick={() => setIsAdminOpen(true)}
