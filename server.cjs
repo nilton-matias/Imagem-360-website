@@ -160,7 +160,7 @@ async function handleContact(req, res, body) {
   // 1. Envio prioritário via Nodemailer SMTP (Google Workspace / Gmail)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
-      const fromName = process.env.SMTP_FROM_NAME || 'Imagem 360 Website'
+      const fromName = process.env.SMTP_FROM_NAME || 'Imagem 360'
       const fromUser = process.env.SMTP_USER
       await sendSmtpMail({
         from: `"${fromName}" <${fromUser}>`,

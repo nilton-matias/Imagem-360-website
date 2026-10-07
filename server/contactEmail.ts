@@ -262,7 +262,7 @@ export async function sendContactEmail(
     const pass = env.SMTP_PASS
     const initialPort = parseInt(env.SMTP_PORT || '465', 10)
     const portsToTry = initialPort === 465 ? [465, 587] : [587, 465]
-    const fromName = env.SMTP_FROM_NAME || 'Imagem 360 Website'
+    const fromName = env.SMTP_FROM_NAME || 'Imagem 360'
 
     let lastError: any = null
     for (const port of portsToTry) {
