@@ -282,6 +282,13 @@ export default function V3() {
           <nav className="nav-links" style={{ alignItems: 'center', gap: '22px' }}>
             {navLinks.map(l => (
               <a key={l.href} href={l.href}
+                onClick={e => {
+                  if (l.href.startsWith('#')) {
+                    e.preventDefault()
+                    const target = document.getElementById(l.href.slice(1))
+                    if (target) target.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
                 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.14em', color: l.accent ? R : t.fgMuted, textDecoration: 'none', transition: 'color 0.2s', fontWeight: l.accent ? 700 : 400 }}
                 onMouseEnter={e => (e.currentTarget.style.color = R)}
                 onMouseLeave={e => (e.currentTarget.style.color = l.accent ? R : t.fgMuted)}>
@@ -314,7 +321,21 @@ export default function V3() {
         {menuOpen && (
           <div style={{ borderTop: `1px solid ${t.border}`, padding: '18px clamp(20px,5vw,48px) 24px', background: t.navGlass, backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {navLinks.map(l => (
-              <a key={l.href} href={l.href} style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.12em', color: t.fgMid, textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>{l.label}</a>
+              <a
+                key={l.href}
+                href={l.href}
+                style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.12em', color: t.fgMid, textDecoration: 'none' }}
+                onClick={e => {
+                  setMenuOpen(false)
+                  if (l.href.startsWith('#')) {
+                    e.preventDefault()
+                    const target = document.getElementById(l.href.slice(1))
+                    if (target) target.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+              >
+                {l.label}
+              </a>
             ))}
             <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
               <button onClick={() => setLang(current => current === 'pt' ? 'en' : 'pt')} style={{ flex: 1, padding: '12px', background: R, color: '#fff', border: 'none', borderRadius: '999px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>{lang === 'pt' ? 'English' : 'Português'}</button>
@@ -347,7 +368,16 @@ export default function V3() {
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              <a href="#servicos" style={{ padding: '13px 28px', background: R, color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.12em', transition: 'background 0.2s', boxShadow: `0 6px 24px ${R}55` }}
+              <a
+                href="#servicos"
+                onClick={e => {
+                  e.preventDefault()
+                  const target = document.getElementById('servicos')
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+                style={{ padding: '13px 28px', background: R, color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.12em', transition: 'background 0.2s', boxShadow: `0 6px 24px ${R}55` }}
                 onMouseEnter={e => (e.currentTarget.style.background = R_DARK)}
                 onMouseLeave={e => (e.currentTarget.style.background = R)}>
                 {copy.hero[3]} →
