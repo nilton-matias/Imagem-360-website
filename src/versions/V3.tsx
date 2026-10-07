@@ -186,27 +186,29 @@ export default function V3() {
     setSendError('')
 
     try {
-      const res = await fetch('/api/contact', {
+      const formData = new FormData()
+      formData.append('access_key', 'c973c589-8d58-49e8-aeb2-ef76ce928ed2')
+      formData.append('name', form.name)
+      formData.append('email', form.email)
+      formData.append('subject', form.subject || 'Contacto via Website')
+      formData.append('message', form.message)
+      formData.append('from_name', 'Website Imagem 360')
+
+      const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: form.name,
-          email: form.email,
-          assunto: form.subject || 'Contacto via Website',
-          mensagem: form.message,
-        }),
+        body: formData,
       })
 
       const data = await res.json().catch(() => ({}))
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao enviar mensagem. Tente novamente.')
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || 'Erro ao enviar mensagem. Tente novamente.')
       }
 
       setSent(true)
       setForm({ name: '', email: '', subject: '', message: '' })
     } catch (err: any) {
-      setSendError(err.message || 'Erro ao enviar mensagem.')
+      setSendError(err.message || 'Erro ao enviar mensagem. Tente novamente.')
     } finally {
       setSending(false)
     }
