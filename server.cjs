@@ -59,21 +59,40 @@ function setCors(res) {
 
 const LOGO_URL = process.env.EMAIL_LOGO_URL || 'https://media.githubusercontent.com/media/nilton-matias/Imagem-360-website/main/public/logo_360.png'
 
-// Helper para inicializar transporter do Nodemailer (SMTP Google Workspace / Gmail)
-function getMailer() {
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    const port = parseInt(process.env.SMTP_PORT || '465', 10)
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port,
-      secure: port === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    })
+// Helper resiliente para envio via Nodemailer SMTP (com IPv4 forçado e fallback de portas na AWS)
+async function sendSmtpMail(mailOptions) {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com'
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
+  const initialPort = parseInt(process.env.SMTP_PORT || '465', 10)
+
+  // Testa a porta configurada primeiro (465 SSL ou 587 STARTTLS) e depois a alternativa
+  const portsToTry = initialPort === 465 ? [465, 587] : [587, 465]
+  let lastError = null
+
+  for (const port of portsToTry) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        family: 4, // CRÍTICO NA AWS EC2: Força IPv4 para evitar timeout IPv6 de 60s
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
+      })
+
+      const info = await transporter.sendMail(mailOptions)
+      console.log(`[smtp] Email enviado com sucesso via porta ${port}:`, info.messageId)
+      return { success: true, messageId: info.messageId }
+    } catch (err) {
+      console.warn(`[smtp] Tentativa na porta ${port} falhou:`, err.message)
+      lastError = err
+    }
   }
-  return null
+
+  throw lastError
 }
 
 // Handler de envio de email (Nodemailer SMTP com fallback para Resend)
@@ -139,12 +158,11 @@ async function handleContact(req, res, body) {
   const textBody = `Nome: ${nome}\nEmail: ${email}\n${telefone ? `Telefone: ${telefone}\n` : ''}Assunto: ${assunto}\n\nMensagem:\n${mensagem}`
 
   // 1. Envio prioritário via Nodemailer SMTP (Google Workspace / Gmail)
-  const transporter = getMailer()
-  if (transporter) {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
       const fromName = process.env.SMTP_FROM_NAME || 'Imagem 360 Website'
       const fromUser = process.env.SMTP_USER
-      await transporter.sendMail({
+      await sendSmtpMail({
         from: `"${fromName}" <${fromUser}>`,
         to,
         replyTo: email,

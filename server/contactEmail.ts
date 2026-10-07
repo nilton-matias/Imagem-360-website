@@ -257,62 +257,74 @@ export async function sendContactEmail(
 
   // 1. Envio prioritário via Nodemailer SMTP (Google Workspace / Gmail)
   if (env.SMTP_USER && env.SMTP_PASS) {
-    try {
-      const port = parseInt(env.SMTP_PORT || '465', 10)
-      const transporter = nodemailer.createTransport({
-        host: env.SMTP_HOST || 'smtp.gmail.com',
-        port,
-        secure: port === 465,
-        auth: {
-          user: env.SMTP_USER,
-          pass: env.SMTP_PASS,
-        },
-      })
+    const host = env.SMTP_HOST || 'smtp.gmail.com'
+    const user = env.SMTP_USER
+    const pass = env.SMTP_PASS
+    const initialPort = parseInt(env.SMTP_PORT || '465', 10)
+    const portsToTry = initialPort === 465 ? [465, 587] : [587, 465]
+    const fromName = env.SMTP_FROM_NAME || 'Imagem 360 Website'
 
-      const fromName = env.SMTP_FROM_NAME || 'Imagem 360 Website'
-      const info = await transporter.sendMail({
-        from: `"${fromName}" <${env.SMTP_USER}>`,
-        to,
-        replyTo: normalized.email,
-        subject,
-        text,
-        html,
-      })
-
-      console.info('[smtp] Mensagem enviada com sucesso via Nodemailer, messageId:', info.messageId)
-
-      // Envio de confirmação ao cliente
+    let lastError: any = null
+    for (const port of portsToTry) {
       try {
-        const confirmation = buildClientConfirmationEmail(normalized)
-        await transporter.sendMail({
-          from: `"${fromName}" <${env.SMTP_USER}>`,
-          to: normalized.email,
-          replyTo: to,
-          subject: confirmation.subject,
-          text: confirmation.text,
-          html: confirmation.html,
-        }).catch(err => {
-          console.warn('[smtp] Aviso: Confirmação ao cliente não enviada:', err?.message || err)
+        const transporter = nodemailer.createTransport({
+          host,
+          port,
+          secure: port === 465,
+          auth: { user, pass },
+          family: 4, // CRÍTICO NA AWS EC2: Força IPv4 para evitar timeout de 60s
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 10000,
         })
-      } catch (err) {
-        console.warn('[smtp] Aviso: Erro ao enviar confirmação ao cliente:', err)
-      }
 
-      return {
-        ok: true,
-        status: 200,
-        body: {
-          id: info.messageId,
-          message: 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.',
-        },
+        const info = await transporter.sendMail({
+          from: `"${fromName}" <${user}>`,
+          to,
+          replyTo: normalized.email,
+          subject,
+          text,
+          html,
+        })
+
+        console.info(`[smtp] Mensagem enviada com sucesso via porta ${port}, messageId:`, info.messageId)
+
+        // Envio de confirmação ao cliente
+        try {
+          const confirmation = buildClientConfirmationEmail(normalized)
+          await transporter.sendMail({
+            from: `"${fromName}" <${user}>`,
+            to: normalized.email,
+            replyTo: to,
+            subject: confirmation.subject,
+            text: confirmation.text,
+            html: confirmation.html,
+          }).catch(err => {
+            console.warn('[smtp] Aviso: Confirmação ao cliente não enviada:', err?.message || err)
+          })
+        } catch (err) {
+          console.warn('[smtp] Aviso: Erro ao enviar confirmação ao cliente:', err)
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          body: {
+            id: info.messageId,
+            message: 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.',
+          },
+        }
+      } catch (err: any) {
+        console.warn(`[smtp] Falha ao enviar pela porta ${port}:`, err?.message)
+        lastError = err
       }
-    } catch (smtpErr: any) {
-      console.error('[smtp] Falha ao enviar via Nodemailer SMTP:', smtpErr)
-      return {
-        ok: false,
-        status: 500,
-        body: { error: 'Erro ao enviar email pelo servidor SMTP: ' + (smtpErr?.message || '') },
-      }
+    }
+
+    console.error('[smtp] Falha em todas as portas SMTP testadas:', lastError)
+    return {
+      ok: false,
+      status: 500,
+      body: { error: 'Erro ao enviar email pelo servidor SMTP: ' + (lastError?.message || '') },
     }
   }
 
