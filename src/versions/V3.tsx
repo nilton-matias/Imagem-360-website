@@ -405,7 +405,8 @@ export default function V3() {
               ].map(flow => (
                 <g key={flow.d}>
                   <path d={flow.d} fill="none" stroke={R} strokeWidth="2.5" strokeOpacity={dark ? 0.9 : 0.75} markerEnd="url(#flow-arrow-end)" />
-                  <circle className="signal-flow-dot" r="4.5" fill={R}>
+                  <circle className="signal-flow-dot" r="4.5" fill={R} opacity="0">
+                    <animate attributeName="opacity" to="1" dur="0.05s" begin={flow.delay} fill="freeze" />
                     <animateMotion dur="2.2s" begin={flow.delay} repeatCount="indefinite" path={flow.d} />
                   </circle>
                 </g>
