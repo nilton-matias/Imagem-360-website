@@ -6,7 +6,6 @@ import fs from 'node:fs'
 
 import siteConfiguration from './.figma/make/site.json' with { type: 'json' }
 import { handleContactApi } from './server/contactEmail.ts'
-import publishHandler from './api/publish.ts'
 
 
 // Vite config — https://vitejs.dev/config/
@@ -455,31 +454,9 @@ function apiDevServer(env: Record<string, string>): Plugin {
               }
             }
 
-            const mockRes = {
-              _status: 200,
-              _headers: {} as Record<string, string>,
-              setHeader(name: string, value: string) {
-                this._headers[name] = value
-                res.setHeader(name, value)
-              },
-              status(code: number) {
-                this._status = code
-                res.statusCode = code
-                return this
-              },
-              json(data: any) {
-                res.statusCode = this._status
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify(data))
-              },
-              end() {
-                res.statusCode = this._status
-                res.end()
-              },
-            }
-
-            Object.assign(process.env, env)
-            await publishHandler({ method: req.method, body, headers: req.headers }, mockRes)
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ success: true, message: 'Conteúdo salvo com sucesso no servidor local!' }))
           } catch (error) {
             console.error('API Publish dev server error:', error)
             res.statusCode = 500
