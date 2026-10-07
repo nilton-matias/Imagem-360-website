@@ -688,7 +688,7 @@ export default function V3() {
               { icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', title: 'Email Marketing', desc: 'Campanhas visuais com métricas em tempo real' },
               { icon: 'M12 18h.01M8 21h8a2 2 0 002-2v-1a7 7 0 10-14 0v1a2 2 0 002 2z', title: 'USSD', desc: 'Interacção directa sem necessidade de internet' },
               { icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', title: 'Relatórios', desc: 'Dashboards com resultados de cada campanha' },
-            ].map(f => (
+            ].map((f, fIndex) => (
               <div key={f.title} style={{ padding: '24px', background: t.glass, borderRadius: '18px', border: `1px solid ${t.glassBorder}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: t.cardShadow, transition: 'all 0.25s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = `${R}44`; e.currentTarget.style.transform = 'translateY(-3px)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = t.glassBorder; e.currentTarget.style.transform = 'translateY(0)' }}>

@@ -1,8 +1,11 @@
 {
-  "title": "Mockups",
-  "description": "This web application offers a modern and minimalist design service, creating visually stunning and unique websites tailored to individual brand identities.",
+  "title": "Imagem 360 | Agência de Marketing e Publicidade",
+  "description": "Imagem 360 — Agência de Marketing e Publicidade. Publicitamos com educação, projetando as melhores soluções.",
+  "icons": {
+    "icon": "/logo_360.png"
+  },
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
