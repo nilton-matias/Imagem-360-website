@@ -1,9 +1,183 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSiteContent } from '../context/ContentContext'
 import { publishContent } from '../services/githubService'
 import { StatItem } from '../types/content'
 import { BRAND_IMAGE_OPTIONS, resolveImageSource } from '../utils/imageMap'
 import logoImg from '../imports/logo_novo_360.png'
+
+function parseDelimitedItems(val: string): string[] {
+  if (!val || typeof val !== 'string') return []
+  if (val.includes('\n')) {
+    return val
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
+  if (val.includes(',') || val.includes(';')) {
+    return val
+      .split(/[,;]/)
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
+  return val.trim() ? [val.trim()] : []
+}
+
+function FlexibleListTextarea({
+  items,
+  onChange,
+  placeholder = 'Escreva cada item em uma nova linha (Enter) ou separe por vírgula',
+  rows = 3,
+  inputBg,
+  border,
+  textColor,
+}: {
+  items: string[]
+  onChange: (items: string[]) => void
+  placeholder?: string
+  rows?: number
+  inputBg: string
+  border: string
+  textColor: string
+}) {
+  const [text, setText] = useState(() => (items || []).join('\n'))
+
+  useEffect(() => {
+    const currentJoined = (items || []).join('\n')
+    const parsedText = parseDelimitedItems(text)
+    const parsedCurrent = parseDelimitedItems(currentJoined)
+    if (JSON.stringify(parsedText) !== JSON.stringify(parsedCurrent)) {
+      setText(currentJoined)
+    }
+  }, [items])
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const raw = e.target.value
+    setText(raw)
+    onChange(parseDelimitedItems(raw))
+  }
+
+  const currentParsed = parseDelimitedItems(text)
+
+  return (
+    <div>
+      <textarea
+        rows={rows}
+        placeholder={placeholder}
+        value={text}
+        onChange={handleChange}
+        style={{
+          width: '100%',
+          boxSizing: 'border-box',
+          padding: '10px 12px',
+          background: inputBg,
+          border: `1px solid ${border}`,
+          borderRadius: '8px',
+          color: textColor,
+          fontSize: '13px',
+          lineHeight: '1.5',
+        }}
+      />
+      {currentParsed.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+          {currentParsed.map((item, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                background: 'rgba(232,56,74,0.1)',
+                color: '#e8384a',
+                border: '1px solid rgba(232,56,74,0.2)',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              <span>•</span> {item}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FlexiblePhoneInput({
+  phones,
+  onChange,
+  inputBg,
+  border,
+  textColor,
+}: {
+  phones: string[]
+  onChange: (phones: string[]) => void
+  inputBg: string
+  border: string
+  textColor: string
+}) {
+  const [text, setText] = useState(() => (phones || []).join(', '))
+
+  useEffect(() => {
+    const current = (phones || []).join(', ')
+    const parsedText = text.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
+    const parsedCurrent = current.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
+    if (JSON.stringify(parsedText) !== JSON.stringify(parsedCurrent)) {
+      setText(current)
+    }
+  }, [phones])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+    setText(raw)
+    const parsed = raw.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
+    onChange(parsed)
+  }
+
+  const currentParsed = text.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="(+258) 834920306, (+258) 875500828"
+        value={text}
+        onChange={handleChange}
+        style={{
+          width: '100%',
+          boxSizing: 'border-box',
+          padding: '10px 12px',
+          background: inputBg,
+          border: `1px solid ${border}`,
+          borderRadius: '8px',
+          color: textColor,
+          fontSize: '13px',
+        }}
+      />
+      {currentParsed.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+          {currentParsed.map((ph, i) => (
+            <span
+              key={i}
+              style={{
+                padding: '2px 8px',
+                background: 'rgba(232,56,74,0.1)',
+                color: '#e8384a',
+                border: '1px solid rgba(232,56,74,0.2)',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              📞 {ph}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AdminPanel() {
   const {
@@ -722,16 +896,17 @@ export default function AdminPanel() {
                             />
                           </div>
                           <div>
-                            <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Itens / Serviços (separados por vírgula ou nova linha)</label>
-                            <textarea
-                              rows={3}
-                              value={(ch.items || []).join('\n')}
-                              onChange={e => {
+                            <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Itens / Serviços (pressione Enter para novo item ou use vírgula)</label>
+                            <FlexibleListTextarea
+                              items={ch.items || []}
+                              onChange={items => {
                                 const updated = { ...content }
-                                updated.copy[textLang].channels[idx].items = e.target.value.split('\n').filter(Boolean)
+                                updated.copy[textLang].channels[idx].items = items
                                 updateContent(updated)
                               }}
-                              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                              inputBg={ui.inputBg}
+                              border={ui.border}
+                              textColor={ui.text}
                             />
                           </div>
                         </div>
@@ -808,29 +983,33 @@ export default function AdminPanel() {
                       <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>3 Destaques e 3 Passos do Processo</h4>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div>
-                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: ui.textMuted, marginBottom: '6px' }}>3 Vantagens (1 por linha)</label>
-                          <textarea
+                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: ui.textMuted, marginBottom: '6px' }}>3 Vantagens (Enter para novo item ou com vírgula)</label>
+                          <FlexibleListTextarea
                             rows={4}
-                            value={(content.copy[textLang].ecoMedia?.highlights || []).join('\n')}
-                            onChange={e => {
+                            items={content.copy[textLang].ecoMedia?.highlights || []}
+                            onChange={highlights => {
                               const updated = { ...content }
-                              updated.copy[textLang].ecoMedia.highlights = e.target.value.split('\n').filter(Boolean)
+                              updated.copy[textLang].ecoMedia.highlights = highlights
                               updateContent(updated)
                             }}
-                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                            inputBg={ui.inputBg}
+                            border={ui.border}
+                            textColor={ui.text}
                           />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: ui.textMuted, marginBottom: '6px' }}>3 Passos de Distribuição (1 por linha)</label>
-                          <textarea
+                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: ui.textMuted, marginBottom: '6px' }}>3 Passos de Distribuição (Enter para novo item ou com vírgula)</label>
+                          <FlexibleListTextarea
                             rows={4}
-                            value={(content.copy[textLang].ecoMedia?.steps || []).join('\n')}
-                            onChange={e => {
+                            items={content.copy[textLang].ecoMedia?.steps || []}
+                            onChange={steps => {
                               const updated = { ...content }
-                              updated.copy[textLang].ecoMedia.steps = e.target.value.split('\n').filter(Boolean)
+                              updated.copy[textLang].ecoMedia.steps = steps
                               updateContent(updated)
                             }}
-                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                            inputBg={ui.inputBg}
+                            border={ui.border}
+                            textColor={ui.text}
                           />
                         </div>
                       </div>
@@ -1115,12 +1294,13 @@ export default function AdminPanel() {
                           />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Telefones (separados por vírgula)</label>
-                          <input
-                            type="text"
-                            value={(content.contactInfo?.phones || []).join(', ')}
-                            onChange={e => updateContent({ ...content, contactInfo: { ...content.contactInfo, phones: e.target.value.split(',').map(p => p.trim()) } })}
-                            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: ui.inputBg, border: `1px solid ${ui.border}`, borderRadius: '8px', color: ui.text, fontSize: '13px' }}
+                          <label style={{ display: 'block', fontSize: '11px', color: ui.textMuted, marginBottom: '4px' }}>Telefones (separados por vírgula ou nova linha)</label>
+                          <FlexiblePhoneInput
+                            phones={content.contactInfo?.phones || []}
+                            onChange={phones => updateContent({ ...content, contactInfo: { ...content.contactInfo, phones } })}
+                            inputBg={ui.inputBg}
+                            border={ui.border}
+                            textColor={ui.text}
                           />
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
