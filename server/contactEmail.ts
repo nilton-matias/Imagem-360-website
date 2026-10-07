@@ -127,8 +127,8 @@ function buildAgencyNotificationEmail(data: ReturnType<typeof normalizeContactPa
         <div style="background-color:#ffffff;padding:20px 32px;border-bottom:2px solid #e8384a;">
           <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="width:44px;vertical-align:middle;padding-right:14px;">
-                <img src="cid:logo360" alt="Imagem 360" width="38" height="38" style="display:block;width:38px;height:38px;object-fit:contain;border:0;outline:none;" />
+              <td style="width:48px;vertical-align:middle;padding-right:14px;">
+                <img src="https://raw.githubusercontent.com/nilton-matias/Imagem-360-website/main/public/logo_360.png" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
               </td>
               <td style="vertical-align:middle;">
                 <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>

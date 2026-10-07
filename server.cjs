@@ -94,8 +94,17 @@ async function handleContact(req, res, body) {
     <body style="font-family:Arial,Helvetica,sans-serif;background-color:#f4f7fa;color:#0f172a;padding:24px 16px;margin:0;">
       <div style="max-width:580px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
         <div style="background-color:#ffffff;padding:20px 28px;border-bottom:2px solid #e8384a;">
-          <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;">IMAGEM 360</div>
-          <h1 style="color:#0f172a;margin:8px 0 0;font-size:18px;font-weight:800;">Nova Mensagem de Contacto</h1>
+          <table style="width:100%;border-collapse:collapse;" role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="width:48px;vertical-align:middle;padding-right:14px;">
+                <img src="https://raw.githubusercontent.com/nilton-matias/Imagem-360-website/main/public/logo_360.png" alt="Imagem 360" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;border:0;outline:none;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#e8384a;line-height:1.2;">IMAGEM 360</div>
+                <h1 style="color:#0f172a;margin:2px 0 0 0;font-size:18px;font-weight:800;line-height:1.2;">Nova Mensagem de Contacto</h1>
+              </td>
+            </tr>
+          </table>
         </div>
         <div style="padding:28px;">
           <p style="margin:0 0 8px;"><strong>Nome:</strong> ${nome}</p>
@@ -106,6 +115,9 @@ async function handleContact(req, res, body) {
             <p style="margin:0;color:#334155;line-height:1.6;white-space:pre-wrap;">${mensagem}</p>
           </div>
           <a href="mailto:${email}?subject=Re:%20${encodeURIComponent(assunto)}" style="display:inline-block;background-color:#e8384a;color:#ffffff;text-decoration:none;padding:11px 22px;border-radius:999px;font-weight:700;font-size:13px;">Responder a ${nome}</a>
+        </div>
+        <div style="padding:14px 28px;background-color:#fafafa;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center;">
+          © Imagem 360, Lda • Agência de Marketing e Publicidade
         </div>
       </div>
     </body>
