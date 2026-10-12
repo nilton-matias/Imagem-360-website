@@ -46,19 +46,35 @@ const D = {
 
 // ── Hook: count-up ────────────────────────────────────────
 function useCountUp(target: number, duration = 1600, started = false) {
-  const [val, setVal] = useState(0)
+  const [val, setVal] = useState(() => (started ? target : 0))
+  const completedRef = useRef(false)
+
   useEffect(() => {
-    if (!started) return
+    if (!started && !completedRef.current) return
+    if (completedRef.current) {
+      setVal(target)
+      return
+    }
+
     let s: number | null = null
+    let animId: number
     const tick = (ts: number) => {
       if (!s) s = ts
       const p = Math.min((ts - s) / duration, 1)
-      setVal(Math.floor((1 - Math.pow(1 - p, 3)) * target))
-      if (p < 1) requestAnimationFrame(tick)
+      const current = Math.floor((1 - Math.pow(1 - p, 3)) * target)
+      setVal(current)
+      if (p < 1) {
+        animId = requestAnimationFrame(tick)
+      } else {
+        completedRef.current = true
+        setVal(target)
+      }
     }
-    requestAnimationFrame(tick)
+    animId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(animId)
   }, [started, target, duration])
-  return val
+
+  return completedRef.current ? target : val
 }
 
 // ── Hook: in-view ─────────────────────────────────────────
@@ -66,8 +82,22 @@ function useInView(ref: React.RefObject<Element | null>) {
   const [seen, setSeen] = useState(false)
   useEffect(() => {
     const el = ref.current; if (!el) return
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } }, { threshold: 0.2 })
-    io.observe(el); return () => io.disconnect()
+    // Se o elemento já estiver visível na janela quando carrega
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setSeen(true)
+      return
+    }
+
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        setSeen(true)
+        io.disconnect()
+      }
+    }, { threshold: 0.05, rootMargin: '50px' })
+
+    io.observe(el)
+    return () => io.disconnect()
   }, [])
   return seen
 }
