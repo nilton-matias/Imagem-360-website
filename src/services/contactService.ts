@@ -4,6 +4,8 @@ export interface ContactFormData {
   subject?: string
   message: string
   phone?: string
+  website_url?: string
+  _ts?: number
 }
 
 export interface ContactResponse {
@@ -25,6 +27,8 @@ export async function sendContactMessage(data: ContactFormData): Promise<Contact
         assunto: data.subject || 'Contacto via Website',
         mensagem: data.message,
         telefone: data.phone || '',
+        website_url: data.website_url || '',
+        _ts: data._ts,
       }),
     })
 

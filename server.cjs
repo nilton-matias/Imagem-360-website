@@ -1,7 +1,109 @@
 const http = require('http')
 const fs = require('fs')
 const path = require('path')
+const dns = require('dns')
 const nodemailer = require('nodemailer')
+
+// Força IPv4 no Node para evitar problemas de timeout IPv6 na AWS EC2
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first')
+}
+
+// Cache em memória para limitação de taxa por IP
+const ipContactLimits = new Map()
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for']
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
+  }
+  return req.socket?.remoteAddress || 'unknown'
+}
+
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const windowMs = 5 * 60 * 1000 // 5 minutos
+  const maxRequests = 4
+  const record = ipContactLimits.get(ip)
+
+  if (!record) {
+    ipContactLimits.set(ip, { count: 1, resetAt: now + windowMs, lastSeen: now })
+    return { allowed: true }
+  }
+
+  // Se enviar outra mensagem em menos de 4 segundos
+  if (now - record.lastSeen < 4000) {
+    record.lastSeen = now
+    return { allowed: false, reason: 'Intervalo muito curto entre envios' }
+  }
+
+  if (now > record.resetAt) {
+    record.count = 1
+    record.resetAt = now + windowMs
+    record.lastSeen = now
+    return { allowed: true }
+  }
+
+  record.count += 1
+  record.lastSeen = now
+
+  if (record.count > maxRequests) {
+    return { allowed: false, reason: 'Excesso de mensagens no período' }
+  }
+
+  return { allowed: true }
+}
+
+// Limpeza de cache a cada 10 min
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, data] of ipContactLimits.entries()) {
+    if (now > data.resetAt + 60000) {
+      ipContactLimits.delete(ip)
+    }
+  }
+}, 10 * 60 * 1000)
+
+// Validação RFC 5321 / 5322 estrita (impede '..', domínios inválidos ou formatos que causam erro 553 no Google)
+function isValidEmail(email) {
+  if (!email || typeof email !== 'string') return false
+  if (email.length > 254) return false
+  if (email.includes('..')) return false
+  const parts = email.split('@')
+  if (parts.length !== 2) return false
+  const [local, domain] = parts
+  if (!local || !domain || local.startsWith('.') || local.endsWith('.')) return false
+  if (!domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) return false
+  const tld = domain.split('.').pop()
+  if (!tld || tld.length < 2) return false
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/
+  return emailRegex.test(email)
+}
+
+// Detecção de spam / mash de teclado / caracteres sem nexo
+function isGibberish(text) {
+  if (!text || typeof text !== 'string') return false
+  const clean = text.trim()
+  if (!clean) return false
+
+  // Se tiver mais de 35 caracteres sem um único espaço (ex: "odsufhosdjfifjdsofjoidsjfdsijfdofjfoisjfosjfso")
+  if (clean.length > 35 && !/\s/.test(clean)) return true
+
+  // Sequências de 6 ou mais consoantes seguidas (ex: "jdkjxjskjdj")
+  const consonantCluster = /[bcdfghjklmnpqrstvwxyz]{6,}/i
+  if (consonantCluster.test(clean)) return true
+
+  // Palavras longas (> 16 letras) sem vogais suficientes (menos de 15% de vogais)
+  const words = clean.split(/\s+/)
+  for (const word of words) {
+    if (word.length > 16 && !word.startsWith('http')) {
+      const vowels = (word.match(/[aeiouyáéíóúãõâêîôûàèìòùäëïöü]/gi) || []).length
+      if (vowels / word.length < 0.15) return true
+    }
+  }
+
+  return false
+}
 
 // Carrega variáveis do arquivo .env manualmente para não depender de pacotes externos
 function loadEnv() {
@@ -97,23 +199,56 @@ async function sendSmtpMail(mailOptions) {
 
 // Handler de envio de email (Nodemailer SMTP com fallback para Resend)
 async function handleContact(req, res, body) {
+  const clientIp = getClientIp(req)
+
+  // 1. Verificação de Honeypot (campo oculto que só bots preenchem)
+  const honeypot = (body?.website_url || body?.company_hp || body?.honeypot || '').trim()
+  if (honeypot) {
+    console.warn(`[anti-bot] Honeypot preenchido pelo IP ${clientIp}. Descartado silenciosamente.`)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
+  }
+
+  // 2. Verificação de tempo mínimo de preenchimento
+  const timeTaken = Number(body?._ts)
+  if (!isNaN(timeTaken) && timeTaken > 0 && timeTaken < 1500) {
+    console.warn(`[anti-bot] Envio instantâneo (${timeTaken}ms) do IP ${clientIp}. Descartado silenciosamente.`)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
+  }
+
+  // 3. Limitação de taxa por IP (Rate Limit)
+  const rateCheck = checkRateLimit(clientIp)
+  if (!rateCheck.allowed) {
+    console.warn(`[anti-bot] IP ${clientIp} bloqueado por rate limit: ${rateCheck.reason}`)
+    res.writeHead(429, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ error: 'Muitas mensagens enviadas em pouco tempo. Por favor aguarde alguns minutos.' }))
+  }
+
   const nome = (body?.nome || body?.name || '').trim()
   const email = (body?.email || '').trim().toLowerCase()
   const assunto = (body?.assunto || body?.subject || 'Contacto via Website').trim()
   const mensagem = (body?.mensagem || body?.message || '').trim()
   const telefone = (body?.telefone || body?.phone || '').trim()
 
-  if (!nome) {
+  if (!nome || nome.length < 2) {
     res.writeHead(400, { 'Content-Type': 'application/json' })
     return res.end(JSON.stringify({ error: 'Por favor, indique o seu nome.' }))
   }
-  if (!email || !email.includes('@')) {
+  if (!isValidEmail(email)) {
     res.writeHead(400, { 'Content-Type': 'application/json' })
     return res.end(JSON.stringify({ error: 'Por favor, indique um email válido.' }))
   }
-  if (!mensagem) {
+  if (!mensagem || mensagem.length < 5) {
     res.writeHead(400, { 'Content-Type': 'application/json' })
-    return res.end(JSON.stringify({ error: 'Por favor, escreva a sua mensagem.' }))
+    return res.end(JSON.stringify({ error: 'Por favor, escreva uma mensagem com pelo menos 5 caracteres.' }))
+  }
+
+  // 4. Detecção de mensagens sem nexo / mash de teclado (anti-spam)
+  if (isGibberish(nome) || isGibberish(assunto) || isGibberish(mensagem)) {
+    console.warn(`[anti-bot] Mensagem sem nexo/aleatória detetada do IP ${clientIp} (nome="${nome}", assunto="${assunto}"). Descartada silenciosamente.`)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso!' }))
   }
 
   const rawTo = (process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER || 'nilton.nhanteme@gmail.com').trim()

@@ -204,6 +204,8 @@ export default function V3() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeCanal, setActiveCanal] = useState(0)
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [botTrap, setBotTrap] = useState('')
+  const formMountTime = useRef(Date.now())
   const [sent, setSent] = useState(false)
   const [focus, setFocus] = useState<string | null>(null)
 
@@ -227,6 +229,8 @@ export default function V3() {
           email: form.email,
           assunto: form.subject || 'Contacto via Website',
           mensagem: form.message,
+          website_url: botTrap,
+          _ts: Date.now() - formMountTime.current,
         }),
       })
 
@@ -795,6 +799,19 @@ export default function V3() {
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* Campo Invisível Anti-Bot (Honeypot) */}
+                <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
+                  <label htmlFor="agency_website_hp">Não preencher</label>
+                  <input
+                    id="agency_website_hp"
+                    type="text"
+                    name="website_url"
+                    value={botTrap}
+                    onChange={e => setBotTrap(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
                 <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', color: t.fg, marginBottom: '6px', transition: 'color 0.3s' }}>{copy.contact[7]}</p>
                 {[['name', copy.contact[8], 'text'], ['email', 'Email', 'email'], ['subject', copy.contact[9], 'text']].map(([f, p, type]) => (
                   <input key={f} type={type} placeholder={p} required={f !== 'subject'}
