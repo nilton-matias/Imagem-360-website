@@ -161,15 +161,17 @@ function setCors(res) {
 
 const LOGO_URL = process.env.EMAIL_LOGO_URL || 'https://media.githubusercontent.com/media/nilton-matias/Imagem-360-website/main/public/logo_360.png'
 
-// Helper resiliente para envio via Nodemailer SMTP (com IPv4 forçado e fallback de portas na AWS)
+// Guarda em cache a última porta SMTP que funcionou com sucesso (evita esperar timeouts de 8s na AWS)
+let preferredPort = parseInt(process.env.SMTP_PORT || '587', 10)
+
+// Helper resiliente para envio via Nodemailer SMTP (com IPv4 forçado e porta rápida)
 async function sendSmtpMail(mailOptions) {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com'
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
-  const initialPort = parseInt(process.env.SMTP_PORT || '465', 10)
 
-  // Testa a porta configurada primeiro (465 SSL ou 587 STARTTLS) e depois a alternativa
-  const portsToTry = initialPort === 465 ? [465, 587] : [587, 465]
+  // Tenta primeiro a porta rápida que funciona na AWS (587) e depois a alternativa (465)
+  const portsToTry = preferredPort === 587 ? [587, 465] : [preferredPort, preferredPort === 465 ? 587 : 465]
   let lastError = null
 
   for (const port of portsToTry) {
@@ -179,13 +181,14 @@ async function sendSmtpMail(mailOptions) {
         port,
         secure: port === 465,
         auth: { user, pass },
-        family: 4, // CRÍTICO NA AWS EC2: Força IPv4 para evitar timeout IPv6 de 60s
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 10000,
+        family: 4, // CRÍTICO NA AWS EC2: Força IPv4 para evitar timeout IPv6
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 8000,
       })
 
       const info = await transporter.sendMail(mailOptions)
+      preferredPort = port // Memoriza para os próximos envios serem instantâneos
       console.log(`[smtp] Email enviado com sucesso via porta ${port}:`, info.messageId)
       return { success: true, messageId: info.messageId }
     } catch (err) {
